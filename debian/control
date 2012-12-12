@@ -1,0 +1,16 @@
+Source: szn-python-pyoo
+Section: python
+Priority: optional
+Maintainer: Miloslav Pojman <miloslav.pojman@firma.seznam.cz>
+Build-Depends: cdbs, debhelper (>= 7.0.50~), python, python-support
+Standards-Version: 3.9.1
+Homepage: http://cml.kancelar.seznam.cz/generic/browser/szn-python-pyoo
+Vcs-Git: git+ssh://git-generic@cml.kancelar.seznam.cz/szn-python-pyoo
+
+Package: szn-python-pyoo
+Architecture: all
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
+Description: Pythonic interface to OpenOffice.org API known as UNO.
+ PyOO library connects to running OpenOffice program. It is able
+ to read and write spreadsheet documents in many formats because
+ it uses functionality implemented in Calc program.
