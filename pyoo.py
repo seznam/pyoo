@@ -164,7 +164,7 @@ class SheetAddress(object):
     $C$2:$F$4
     """
 
-    __slots = ('row', 'col', 'row_count', 'col_count')
+    __slots__ = ('row', 'col', 'row_count', 'col_count')
 
     def __init__(self, row, col, row_count=1, col_count=1):
         self.row, self.col = row, col
