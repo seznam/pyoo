@@ -11,6 +11,28 @@ Package: szn-python-pyoo
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}
 Description: Pythonic interface to OpenOffice.org API known as UNO.
- PyOO library connects to running OpenOffice program. It is able
- to read and write spreadsheet documents in many formats because
- it uses functionality implemented in Calc program.
+ PyOO allows to control a running OpenOffice.org_ program and
+ use it for reading and writing spreadsheet documents.
+ The library can be used for creation of miscellaneous exports
+ to spreadsheet many document formats -- including Microsoft
+ Excel 97 (.xls) and Microsoft Excel 2007 (.xlsx).
+ .
+ The main advantage of PyOO library is that it can use almost any
+ functionality implemented in OpenOffice.org so it does not need
+ to reinvent the wheel as many libraries do. On the other
+ side it requires a running instance of an OpenOffice.org program
+ which means significant overhead.
+ .
+ PyOO uses an UNO_ interface via Python-UNO_ bridge. UNO is a
+ standard interface which allows to control running OpenOffice program.
+ Python-UNO makes this interface available in Python scripts.
+ .
+ Direct usage of UNO API via Python-UNO can be quite complicated
+ and even simple tasks require a lot of code. Another problem
+ is that many UNO calls are slow and should be avoided when it
+ is possible.
+ .
+ PyOO wraps robust Python-UNO bridge to simple and Pythonic
+ interface. Under the hood it implements miscellaneous
+ optimizations which can prevent unnecessary expensive UNO
+ calls.

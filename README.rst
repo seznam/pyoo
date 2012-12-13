@@ -11,7 +11,7 @@ Excel 97 (.xls) and Microsoft Excel 2007 (.xlsx).
 
 The main advantage of PyOO library is that it can use almost any
 functionality implemented in OpenOffice.org so it does not need
-to reinvent the wheel as many libraries do. On the other other
+to reinvent the wheel as many libraries do. On the other
 side it requires a running instance of an OpenOffice.org program
 which means significant overhead.
 
