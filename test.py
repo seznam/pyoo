@@ -1,6 +1,6 @@
 
 import datetime
-import unittest
+import unittest2
 
 import pyoo
 
@@ -13,7 +13,7 @@ def setUpModule():
     desktop = pyoo.Desktop()
 
 
-class BaseTestCase(unittest.TestCase):
+class BaseTestCase(unittest2.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -617,4 +617,4 @@ class SpreadsheetCollectionTestCase(BaseTestCase):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest2.main()

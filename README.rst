@@ -184,9 +184,16 @@ And finally save and close the document: ::
 Testing
 -------
 
-The test suite requires OpenOffice.org running and listening
-on localhost port 2002. All tests are in the ``test.py`` file: ::
+Automated integration test cover most of the code.
+
+Many new features were added to ``unittest`` module in Python 2.7 and
+tests for PyOO library use some of them. If you are using older version
+of Python please install ``unittest2`` library which back-ports these
+features (for example install Debian package `python-unittest2`).
+
+The test suite assumes that OpenOffice.org program is running and
+it is listening on localhost port 2002.
+
+All tests are in the ``test.py`` file: ::
 
     $ python test.py
-
-
