@@ -49,59 +49,48 @@ class CellRangeTestCase(BaseTestCase):
     # Test cell range slicing and indexing:
 
     def test_row_index_must_be_int(self):
-        def func():
+        with self.assertRaises(TypeError):
             self.sheet['x',:]
-        self.assertRaises(TypeError, func)
 
     def test_col_index_must_be_int(self):
-        def func():
+        with self.assertRaises(TypeError):
             self.sheet[:,'x']
-        self.assertRaises(TypeError, func)
 
     def test_row_start_index_must_be_int(self):
-        def func():
+        with self.assertRaises(TypeError):
             self.sheet['x':,:]
-        self.assertRaises(TypeError, func)
 
     def test_row_end_index_must_be_int(self):
-        def func():
+        with self.assertRaises(TypeError):
             self.sheet[:'x',:]
-        self.assertRaises(TypeError, func)
 
     def test_col_start_index_must_be_int(self):
-        def func():
+        with self.assertRaises(TypeError):
             self.sheet['x':,:]
-        self.assertRaises(TypeError, func)
 
     def test_col_end_index_must_be_int(self):
-        def func():
+        with self.assertRaises(TypeError):
             self.sheet[:'x',:]
-        self.assertRaises(TypeError, func)
 
     def test_row_step_is_not_supported(self):
-        def func():
+        with self.assertRaises(NotImplementedError):
             self.sheet[::1,:]
-        self.assertRaises(NotImplementedError, func)
 
     def test_col_step_is_not_supported(self):
-        def func():
+        with self.assertRaises(NotImplementedError):
             self.sheet[:,::1]
-        self.assertRaises(NotImplementedError, func)
 
     def test_row_index_must_be_lt_row_count(self):
-        def func():
+        with self.assertRaises(IndexError):
             self.sheet[1048576,:]
-        self.assertRaises(IndexError, func)
 
     def test_col_index_must_be_lt_col_count(self):
-        def func():
+        with self.assertRaises(IndexError):
             self.sheet[:,1024]
-        self.assertRaises(IndexError, func)
 
     def test_two_dimensions_only(self):
-        def func():
+        with self.assertRaises(ValueError):
             self.sheet[:,:,:]
-        self.assertRaises(ValueError, func)
 
     def test_get_tabular_range_from_sheet(self):
         cells = self.sheet[10:20,1:6]
@@ -285,9 +274,8 @@ class CellRangeTestCase(BaseTestCase):
 
     def test_invalid_cell_value(self):
         cell = self.sheet[0, 0]
-        def func():
+        with self.assertRaises(ValueError):
             cell.value = object()
-        self.assertRaises(ValueError, func)
 
     def test_empty_cell_value(self):
         cell = self.sheet[0, 0]
@@ -331,9 +319,8 @@ class CellRangeTestCase(BaseTestCase):
 
     def test_invalid_cell_formula(self):
         cell = self.sheet[0, 0]
-        def func():
+        with self.assertRaises(ValueError):
             cell.formula = object()
-        self.assertRaises(ValueError, func)
 
     def test_empty_cell_formula(self):
         cell = self.sheet[0, 0]
@@ -529,29 +516,25 @@ class CellRangeTestCase(BaseTestCase):
 class SpreadsheetCollectionTestCase(BaseTestCase):
 
     def test_get_sheet_by_invalid_type(self):
-        def func():
+        with self.assertRaises(TypeError):
             self.document.sheets[object()]
-        self.assertRaises(TypeError, func)
 
     def test_get_sheet(self):
         index = self.document.sheets['Sheet1'].name
         self.assertEqual('Sheet1', self.document.sheets[index].name)
 
     def test_get_sheet_by_negative_index(self):
-        def func():
+        with self.assertRaises(IndexError):
             self.document.sheets[-1]
-        self.assertRaises(IndexError, func)
 
     def test_get_sheet_by_too_large_index(self):
         length = len(self.document.sheets)
-        def func():
+        with self.assertRaises(IndexError):
             self.document.sheets[length]
-        self.assertRaises(IndexError, func)
 
     def test_get_sheet_by_missing_name(self):
-        def func():
+        with self.assertRaises(KeyError):
             self.document.sheets['Missing']
-        self.assertRaises(KeyError, func)
 
     def test_create_sheet(self):
         sheet = self.document.sheets.create('Created')
@@ -587,14 +570,12 @@ class SpreadsheetCollectionTestCase(BaseTestCase):
 
     def test_del_sheet_by_missing_index(self):
         length = len(self.document.sheets)
-        def func():
+        with self.assertRaises(IndexError):
             del self.document.sheets[length]
-        self.assertRaises(IndexError, func)
 
     def test_del_sheet_by_missing_name(self):
-        def func():
+        with self.assertRaises(KeyError):
             del self.document.sheets['Missing']
-        self.assertRaises(KeyError, func)
 
     def test_sheet_unicode(self):
         sheet = self.document.sheets[0]
