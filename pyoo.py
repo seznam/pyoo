@@ -418,7 +418,7 @@ class CellRange(object):
         Sets width of all cell borders (in 1/100 mm).
         """
         target = self._get_target()
-        line = uno.createUnoStruct('com.sun.star.table.BorderLine')
+        line = uno.createUnoStruct('com.sun.star.table.BorderLine2')
         line.OuterLineWidth = value
         # Set all four borders using one call - this can save even a few seconds
         keys = ('TopBorder', 'RightBorder', 'BottomBorder', 'LeftBorder')
@@ -445,7 +445,7 @@ class CellRange(object):
         """
         target = self._get_target()
         # Inner borders are saved in a TableBorder struct.
-        line = uno.createUnoStruct('com.sun.star.table.BorderLine')
+        line = uno.createUnoStruct('com.sun.star.table.BorderLine2')
         line.OuterLineWidth = value
         tb = target.getPropertyValue('TableBorder')
         tb.HorizontalLine = tb.VerticalLine = line
