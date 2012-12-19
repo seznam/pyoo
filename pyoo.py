@@ -13,6 +13,7 @@ FILTER_EXCEL_97 = 'MS Excel 97'
 FILTER_EXCEL_2007 = 'Calc MS Excel 2007 XML'
 
 # Number format choices
+FORMAT_TEXT = uno.getConstantByName('com.sun.star.i18n.NumberFormatIndex.TEXT')
 FORMAT_INT = uno.getConstantByName('com.sun.star.i18n.NumberFormatIndex.NUMBER_INT')
 FORMAT_FLOAT = uno.getConstantByName('com.sun.star.i18n.NumberFormatIndex.NUMBER_DEC2')
 FORMAT_INT_SEP = uno.getConstantByName('com.sun.star.i18n.NumberFormatIndex.NUMBER_1000INT')
