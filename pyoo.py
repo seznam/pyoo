@@ -1084,19 +1084,25 @@ class Desktop(object):
         document = self._open_url(url)
         return SpreadsheetDocument(document)
 
-    def open_spreadsheet(self, path):
+    def open_spreadsheet(self, path, as_template=False):
         """
         Opens an exiting spreadsheet document on the local file system.
         """
+        extra = ()
+        if as_template:
+            pv = uno.createUnoStruct('com.sun.star.beans.PropertyValue')
+            pv.Name = 'AsTemplate'
+            pv.Value = True
+            extra += (pv,)
         # UNO requires absolute paths
         url = uno.systemPathToFileUrl(os.path.abspath(path))
-        document = self._open_url(url)
+        document = self._open_url(url, extra)
         return SpreadsheetDocument(document)
 
-    def _open_url(self, url):
+    def _open_url(self, url, extra=()):
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/frame/XComponentLoader.html#loadComponentFromURL
         try:
-            return self._desktop.loadComponentFromURL(url, '_blank', 0, ())
+            return self._desktop.loadComponentFromURL(url, '_blank', 0, extra)
         except _IOException, e:
             raise IOError(e.Message)
 
@@ -1121,10 +1127,12 @@ class LazyDesktop(object):
         """
         Creates a new spreadsheet document.
         """
-        return self.cls(self.hostname, self.port).create_spreadsheet()
+        desktop = self.cls(self.hostname, self.port)
+        return desktop.create_spreadsheet()
 
-    def open_spreadsheet(self, path):
+    def open_spreadsheet(self, path, as_template=False):
         """
         Opens an exiting spreadsheet document on the local file system.
         """
-        return self.cls(self.hostname, self.port).open_spreadsheet(path)
+        desktop = self.cls(self.hostname, self.port)
+        return desktop.open_spreadsheet(path, as_template=as_template)
