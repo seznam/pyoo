@@ -1059,9 +1059,13 @@ def _get_connection_url(hostname, port):
 
 class Desktop(object):
     """
-    Encapsulates connection to a running Open Office program.
+    Access to a running to an OpenOffice.org program.
 
-    Provides interface for creation and opening of spreadsheet documents.
+    Allows to create and open of spreadsheet documents.
+
+    Opens a connection to a running OpenOffice.org program when Desktop
+    instance is initialized. If the program OpenOffice.org is restarted
+    then the connection is lost all subsequent method calls will fail.
     """
 
     def __init__(self, hostname='localhost', port=2002):
@@ -1082,7 +1086,7 @@ class Desktop(object):
 
     def open_spreadsheet(self, path):
         """
-        Opens an exiting spreadsheet document from a local file system.
+        Opens an exiting spreadsheet document on the local file system.
         """
         # UNO requires absolute paths
         url = uno.systemPathToFileUrl(os.path.abspath(path))
@@ -1095,3 +1099,32 @@ class Desktop(object):
             return self._desktop.loadComponentFromURL(url, '_blank', 0, ())
         except _IOException, e:
             raise IOError(e.Message)
+
+
+class LazyDesktop(object):
+    """
+    Lazy access to a running to Open Office program.
+
+    Provides same interface as a Desktop class but creates connection
+    to OpenOffice program when necessary. The advantage of this approach
+    is that a LazyDesktop instance can recover from a restart of
+    the OpenOffice.org program.
+    """
+
+    cls = Desktop
+
+    def __init__(self, hostname='localhost', port=2002):
+        self.hostname = hostname
+        self.port = port
+
+    def create_spreadsheet(self):
+        """
+        Creates a new spreadsheet document.
+        """
+        return self.cls(self.hostname, self.port).create_spreadsheet()
+
+    def open_spreadsheet(self, path):
+        """
+        Opens an exiting spreadsheet document on the local file system.
+        """
+        return self.cls(self.hostname, self.port).open_spreadsheet(path)
