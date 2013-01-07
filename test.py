@@ -520,6 +520,71 @@ class CellRangeTestCase(BaseTestCase):
         self.assertEqual(fmt, self.sheet[0,0].number_format)
 
 
+class ChartsTestCase(BaseTestCase):
+
+    def setUp(self):
+        self.sheet = self.document.sheets[0]
+
+    def test_get_sheet_by_negative_index(self):
+        with self.assertRaises(IndexError):
+            self.sheet.charts[-1]
+
+    def test_get_sheet_by_too_large_index(self):
+        length = len(self.sheet.charts)
+        with self.assertRaises(IndexError):
+            self.sheet.charts[length]
+
+    def test_get_sheet_by_missing_name(self):
+        with self.assertRaises(KeyError):
+            self.sheet.charts['Missing']
+
+    def test_create_chart(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Created chart', position, address)
+        self.assertEqual('Created chart', chart.name)
+        self.assertEqual(['$A$1:$C$2'], map(str, chart.ranges))
+
+    def test_create_chart_w_multiple_ranges(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        ranges = [pyoo.SheetAddress(0, 0, 2, 3), pyoo.SheetAddress(10, 10, 2, 3)]
+        chart = self.sheet.charts.create('Chart with multiple ranges', position, ranges)
+        self.assertEqual('Chart with multiple ranges', chart.name)
+        self.assertEqual(['$A$1:$C$2', '$K$11:$M$12'], map(str, chart.ranges))
+
+    def test_create_chart_w_row_header(self):
+        position = pyoo.SheetPosition(0, 0, 10000, 10000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Chart with row header', position,
+                                         address, row_header=True)
+        self.assertEqual('Chart with row header', chart.name)
+        self.assertTrue(chart.has_row_header)
+        self.assertFalse(chart.has_col_header)
+
+    def test_create_chart_w_col_header(self):
+        position = pyoo.SheetPosition(0, 0, 10000, 10000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Chart with col header', position,
+                                         address, col_header=True)
+        self.assertEqual('Chart with col header', chart.name)
+        self.assertFalse(chart.has_row_header)
+        self.assertTrue(chart.has_col_header)
+
+    def test_create_chart_w_cells_as_position(self):
+        position = self.sheet[:10,:5]
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Chart over cells', position, address)
+        self.assertEqual('Chart over cells', chart.name)
+
+    def test_create_chart_w_cells_as_address(self):
+        position = pyoo.SheetPosition(0, 0, 10000, 10000)
+        address = self.sheet[:2,:3]
+        chart = self.sheet.charts.create('Chart from cells', position, address)
+        self.assertEqual('Chart from cells', chart.name)
+        self.assertEqual(['$A$1:$C$2'], map(str, chart.ranges))
+
+
+
 class SpreadsheetCollectionTestCase(BaseTestCase):
 
     def test_get_sheet_by_invalid_type(self):

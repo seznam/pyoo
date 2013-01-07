@@ -249,6 +249,20 @@ class SheetAddress(object):
     def col_end(self):
         return self.col + self.col_count - 1
 
+    @classmethod
+    def _from_uno(cls, target):
+        row_count = target.EndRow - target.StartRow + 1
+        col_count = target.EndColumn - target.StartColumn + 1
+        return cls(target.StartRow, target.StartColumn, row_count, col_count)
+
+    def _to_uno(self, sheet):
+        return uno.createUnoStruct(
+            'com.sun.star.table.CellRangeAddress', Sheet=sheet,
+            StartColumn=self.col, StartRow=self.col,
+            EndColumn=self.col_end, EndRow=self.row_end,
+        )
+
+
 class SheetCursor(object):
     """
     Cursor in spreadsheet sheet.
@@ -849,6 +863,127 @@ class VerticalCellRange(CellRange):
     formulas = property(__get_formulas, __set_formulas)
 
 
+class NamedCollection(object):
+    """
+    Base class for collections accessible by both index and name.
+    """
+
+    __slots__ = ('_target',)
+
+    def __init__(self, target):
+        # Target must implement both of:
+        # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XIndexAccess.html
+        # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XNameAccess.html
+        self._target = target
+
+    def __len__(self):
+        return self._target.getCount()
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, long)):
+            target = self._get_by_index(key)
+            return self._factory(target)
+        if isinstance(key, basestring):
+            target = self._get_by_name(key)
+            return self._factory(target)
+        raise TypeError('%s must be accessed either by index or name.'
+                        % self.__class__.__name__)
+
+    # Internal:
+
+    def _factory(self, target):
+        raise NotImplementedError # pragma: no cover
+
+    def _get_by_index(self, index):
+        try:
+            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XIndexAccess.html#getByIndex
+            return self._target.getByIndex(index)
+        except _IndexOutOfBoundsException:
+            raise IndexError(index)
+
+    def _get_by_name(self, name):
+        try:
+            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XNameAccess.html#getByName
+            return self._target.getByName(name)
+        except _NoSuchElementException:
+            raise KeyError(name)
+
+
+
+class Chart(object):
+    """
+    Chart
+    """
+
+    __slots__ = ('sheet', '_target')
+
+    def __init__(self, sheet, target):
+        self.sheet = sheet
+        self._target = target
+
+    @property
+    def name(self):
+        return self._target.getName()
+
+    @property
+    def has_row_header(self):
+        return self._target.getHasRowHeaders()
+
+    @property
+    def has_col_header(self):
+        return self._target.getHasColumnHeaders()
+
+    @property
+    def ranges(self):
+        ranges = self._target.getRanges()
+        return map(SheetAddress._from_uno, ranges)
+
+
+class ChartCollection(NamedCollection):
+    """
+    Collection of charts in one sheet.
+    """
+
+    __slots__ = ('sheet',)
+
+    def __init__(self, sheet, target):
+        self.sheet = sheet
+        super(ChartCollection, self).__init__(target)
+
+    def create(self, name, position, ranges=(), col_header=False, row_header=False):
+        """
+        Creates a and inserts a new chart.
+        """
+        rect = self._uno_rect(position)
+        ranges = self._uno_ranges(ranges)
+        self._create(name, rect, ranges, col_header, row_header)
+        return self[name]
+
+    # Internal:
+
+    def _factory(self, target):
+        return Chart(self.sheet, target)
+
+    def _uno_rect(self, position):
+        if isinstance(position, CellRange):
+            position = position.position
+        return position._to_uno()
+
+    def _uno_ranges(self, ranges):
+        if not isinstance(ranges, (list, tuple)):
+            ranges = [ranges]
+        return tuple(map(self._uno_range, ranges))
+
+    def _uno_range(self, address):
+        if isinstance(address, CellRange):
+            address = address.address
+        return address._to_uno(self.sheet.index)
+
+    def _create(self, name, rect, ranges, col_header, row_header):
+        # http://www.openoffice.org/api/docs/common/ref/com/sun/star/table/XTableCharts.html#addNewByName
+        self._target.addNewByName(name, rect, ranges, col_header, row_header)
+
+
 class Sheet(TabularCellRange):
     """
     One sheet in a spreadsheet document.
@@ -895,8 +1030,13 @@ class Sheet(TabularCellRange):
         return self._target.setName(value);
     name = property(__get_name, __set_name)
 
+    @property
+    def charts(self):
+        target = self._target.getCharts()
+        return ChartCollection(self, target)
 
-class SpreadsheetCollection(object):
+
+class SpreadsheetCollection(NamedCollection):
     """
     Collection of spreadsheets in a spreadsheet document.
 
@@ -906,19 +1046,7 @@ class SpreadsheetCollection(object):
 
     def __init__(self, document, target):
         self.document = document # Parent SpreadsheetDocument
-        self._target = target # UNO com.sun.star.sheet.XSpreadsheets
-
-    def __len__(self):
-        return self._target.getCount()
-
-    def __getitem__(self, key):
-        if isinstance(key, (int, long)):
-            target = self._get_by_index(key)
-        elif isinstance(key, basestring):
-            target = self._get_by_name(key)
-        else:
-            raise TypeError('SpreadsheetCollection must be accessed either by index or name.')
-        return Sheet(self.document, target)
+        super(SpreadsheetCollection, self).__init__(target)
 
     def __delitem__(self, key):
         if not isinstance(key, basestring):
@@ -951,19 +1079,8 @@ class SpreadsheetCollection(object):
 
     # Internal:
 
-    def _get_by_index(self, index):
-        try:
-            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XIndexAccess.html#getByIndex
-            return self._target.getByIndex(index)
-        except _IndexOutOfBoundsException:
-            raise IndexError('No sheet with index %r.' % index)
-
-    def _get_by_name(self, name):
-        try:
-            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XNameAccess.html#getByName
-            return self._target.getByName(name)
-        except _NoSuchElementException:
-            raise KeyError('No sheet with name %r.' % name)
+    def _factory(self, target):
+        return Sheet(self.document, target)
 
     def _create(self, name, index):
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/sheet/XSpreadsheets.html#insertNewByName
@@ -977,7 +1094,7 @@ class SpreadsheetCollection(object):
         try:
             self._target.removeByName(name)
         except _NoSuchElementException:
-            raise KeyError('No sheet with name %r.' % name)
+            raise KeyError(name)
 
 
 class Locale(object):
