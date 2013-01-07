@@ -163,9 +163,56 @@ def _col_name(index):
         index -= limit
 
 
+class SheetPosition(object):
+    """
+    Position of a rectangular are in a spreadsheet.
+
+    This class represent physical position in 100/th mm,
+    see SheetAddress class for logical address of cells.
+
+    >>> position = SheetPosition(1000, 2000)
+    >>> print position
+    x=1000, y=2000
+    >>> position = SheetPosition(1000, 2000, 3000, 4000)
+    >>> print position
+    x=1000, y=2000, width=3000, height=4000
+    """
+
+    def __init__(self, x, y, width=0, height=0):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+    def __unicode__(self):
+        if self.width == self.height == 0:
+            return 'x=%d, y=%d' % (self.x, self.y)
+        return 'x=%d, y=%d, width=%d, height=%d' % (self.x, self.y,
+                                                    self.width, self.height)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __repr__(self):
+        return '<%s: %r>' % (self.__class__.__name__, str(self))
+
+    @classmethod
+    def _from_uno(cls, position, size):
+        return cls(position.X, position.Y, size.Width, size.Height)
+
+    def _to_uno(self):
+        return uno.createUnoStruct(
+            'com.sun.star.awt.Rectangle', X=self.x, Y=self.y,
+            Width=self.width, Height=self.height,
+        )
+
+
 class SheetAddress(object):
     """
     Address of a a cell or rectangular range of cells in a spreadsheet.
+
+    This class represent logical address of cells, see SheetPosition
+    class for physical location.
 
     >>> address = SheetAddress(1, 2)
     >>> print address
@@ -185,8 +232,7 @@ class SheetAddress(object):
         start = u'$%s$%s' % (_col_name(self.col), _row_name(self.row))
         if self.row_count == self.col_count == 1:
             return start
-        end = u'$%s$%s' % (_col_name(self.col + self.col_count - 1),
-                           _row_name(self.row + self.row_count - 1))
+        end = u'$%s$%s' % (_col_name(self.col_end), _row_name(self.row_end))
         return u'%s:%s' % (start, end)
 
     def __str__(self):
@@ -195,6 +241,13 @@ class SheetAddress(object):
     def __repr__(self):
         return '<%s: %r>' % (self.__class__.__name__, str(self))
 
+    @property
+    def row_end(self):
+        return self.row + self.row_count - 1
+
+    @property
+    def col_end(self):
+        return self.col + self.col_count - 1
 
 class SheetCursor(object):
     """
@@ -278,6 +331,15 @@ class CellRange(object):
 
     def __repr__(self):
         return '<%s: %r>' % (self.__class__.__name__, str(self))
+
+    @property
+    def position(self):
+        """
+        Physical position of this cells.
+        """
+        target = self._get_target()
+        position, size = target.getPropertyValues(('Position', 'Size'))
+        return SheetPosition._from_uno(position, size)
 
     def __get_is_merged(self):
         """

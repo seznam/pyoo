@@ -412,6 +412,13 @@ class CellRangeTestCase(BaseTestCase):
 
     # Test cell formatting and manipulation:
 
+    def test_cell_position(self):
+        position = self.sheet[0,0].position
+        self.assertEqual(0, position.x)
+        self.assertEqual(0, position.y)
+        self.assertTrue(0 < position.width < 10000)
+        self.assertTrue(0 < position.height < 10000)
+
     def test_cells_merging(self):
         self.assertFalse(self.sheet[0:2,0:2].is_merged)
         self.sheet[0:2,0:2].is_merged = True
