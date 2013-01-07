@@ -4,7 +4,6 @@ import itertools
 import datetime
 import numbers
 
-
 import uno
 
 # Filters used when saving document.
@@ -292,8 +291,8 @@ class SheetCursor(object):
         # This method is called for almost any operation so it should
         # be maximally optimized.
         #
-        # Any comparison here is negligible to UNO call. It means that we do
-        # all possible checks which can prevent unnecessary cursor movement.
+        # Any comparison here is negligible compared to UNO call. So we do all
+        # possible checks which can prevent an unnecessary cursor movement.
         #
         # Generally we need to expand or collapse selection to the desired
         # size and move it to the desired position. But both of these actions
@@ -303,7 +302,7 @@ class SheetCursor(object):
         # selection change).
         #
         target = self._target
-        # If not we cannot resize selection now then we must move cursor first.
+        # If we cannot resize selection now then we must move cursor first.
         if self.row + row_count > self.max_row_count or self.col + col_count > self.max_col_count:
             # Move cursor to the desired position if possible.
             row_delta = row - self.row if row + self.row_count <= self.max_row_count else 0
@@ -647,7 +646,6 @@ class Cell(CellRange):
         return self.sheet.document.time_from_number(self.value)
 
 
-
 class TabularCellRange(CellRange):
     """
     Tabular range of cells.
@@ -923,18 +921,30 @@ class Chart(object):
 
     @property
     def name(self):
+        """
+        Chart name which can be used as a key.
+        """
         return self._target.getName()
 
     @property
     def has_row_header(self):
+        """
+        Returns whether the first row is used for header
+        """
         return self._target.getHasRowHeaders()
 
     @property
     def has_col_header(self):
+        """
+        Returns whether the first column is used for header
+        """
         return self._target.getHasColumnHeaders()
 
     @property
     def ranges(self):
+        """
+        Returns a list of addresses with source data.
+        """
         ranges = self._target.getRanges()
         return map(SheetAddress._from_uno, ranges)
 
