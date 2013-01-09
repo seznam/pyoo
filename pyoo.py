@@ -200,10 +200,12 @@ class SheetPosition(object):
         return cls(position.X, position.Y, size.Width, size.Height)
 
     def _to_uno(self):
-        return uno.createUnoStruct(
-            'com.sun.star.awt.Rectangle', X=self.x, Y=self.y,
-            Width=self.width, Height=self.height,
-        )
+        struct = uno.createUnoStruct('com.sun.star.awt.Rectangle')
+        struct.X = self.x
+        struct.Y = self.y
+        struct.Width = self.width
+        struct.Height = self.height
+        return struct
 
 
 class SheetAddress(object):
@@ -255,11 +257,13 @@ class SheetAddress(object):
         return cls(target.StartRow, target.StartColumn, row_count, col_count)
 
     def _to_uno(self, sheet):
-        return uno.createUnoStruct(
-            'com.sun.star.table.CellRangeAddress', Sheet=sheet,
-            StartColumn=self.col, StartRow=self.col,
-            EndColumn=self.col_end, EndRow=self.row_end,
-        )
+        struct = uno.createUnoStruct('com.sun.star.table.CellRangeAddress')
+        struct.Sheet = sheet
+        struct.StartColumn=self.col
+        struct.StartRow=self.row
+        struct.EndColumn=self.col_end
+        struct.EndRow=self.row_end
+        return struct
 
 
 class SheetCursor(object):
