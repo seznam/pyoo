@@ -350,6 +350,30 @@ class DiagramSeries(_UnoProxy):
         self._target.setPropertyValue('Axis', value)
     axis = property(__get_axis, __set_axis)
 
+    def __get_line_color(self):
+        """
+        Gets line color.
+        """
+        return self._target.getPropertyValue('LineColor')
+    def __set_line_color(self, value):
+        """
+        Sets line color.
+        """
+        self._target.setPropertyValue('LineColor', value)
+    line_color = property(__get_line_color, __set_line_color)
+
+    def __get_fill_color(self):
+        """
+        Gets fill color.
+        """
+        return self._target.getPropertyValue('FillColor')
+    def __set_fill_color(self, value):
+        """
+        Sets fill color.
+        """
+        self._target.setPropertyValue('FillColor', value)
+    fill_color = property(__get_fill_color, __set_fill_color)
+
 
 class DiagramSeriesCollection(_UnoProxy):
     """
@@ -456,6 +480,12 @@ class LineDiagram(Diagram):
     __slots__ = ()
 
     _type = 'com.sun.star.chart.LineDiagram'
+
+    def __get_spline(self):
+        return self._target.getPropertyValue('SplineType')
+    def __set_spline(self, value):
+        self._target.setPropertyValue('SplineType', int(value))
+    spline = property(__get_spline, __set_spline)
 
 
 # Registry of supported diagram types.

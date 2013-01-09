@@ -605,6 +605,15 @@ class ChartsTestCase(BaseTestCase):
         diagram.is_stacked = True
         self.assertTrue(diagram.is_stacked)
 
+    def test_diagram_spline(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Spline', position, address)
+        diagram = chart.change_type(pyoo.LineDiagram)
+        self.assertFalse(diagram.spline)
+        diagram.spline = True
+        self.assertTrue(diagram.spline)
+
     def test_secondary_x_axis(self):
         position = pyoo.SheetPosition(0, 0, 1000, 1000)
         address = pyoo.SheetAddress(0, 0, 2, 3)
@@ -638,6 +647,22 @@ class ChartsTestCase(BaseTestCase):
         self.assertEqual(pyoo.AXIS_PRIMARY, series.axis)
         series.axis = pyoo.AXIS_SECONDARY
         self.assertEqual(pyoo.AXIS_SECONDARY, series.axis)
+
+    def test_series_line_color(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Line color', position, address)
+        series = chart.diagram.series[0]
+        series.line_color = 0xFF0000
+        self.assertEqual(0xFF0000, series.line_color)
+
+    def test_series_fill_color(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Fill color', position, address)
+        series = chart.diagram.series[0]
+        series.fill_color = 0xFF0000
+        self.assertEqual(0xFF0000, series.fill_color)
 
 
 
