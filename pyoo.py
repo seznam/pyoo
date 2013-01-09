@@ -40,6 +40,7 @@ UNDERLINE_NONE = uno.getConstantByName('com.sun.star.awt.FontUnderline.NONE')
 UNDERLINE_SINGLE = uno.getConstantByName('com.sun.star.awt.FontUnderline.SINGLE')
 UNDERLINE_DOUBLE = uno.getConstantByName('com.sun.star.awt.FontUnderline.DOUBLE')
 
+
 # Text alignment choices
 TEXT_ALIGN_STANDARD = 'STANDARD'
 TEXT_ALIGN_LEFT = 'LEFT'
@@ -48,6 +49,9 @@ TEXT_ALIGN_RIGHT = 'RIGHT'
 TEXT_ALIGN_BLOCK = 'BLOCK'
 TEXT_ALIGN_REPEAT = 'REPEAT'
 
+# Axis choices
+AXIS_PRIMARY = uno.getConstantByName('com.sun.star.chart.ChartAxisAssign.PRIMARY_Y')
+AXIS_SECONDARY = uno.getConstantByName('com.sun.star.chart.ChartAxisAssign.SECONDARY_Y')
 
 # Exceptions thrown by UNO.
 # We try to catch them and re-throw Python standard exceptions.
@@ -911,17 +915,159 @@ class NamedCollection(object):
             raise KeyError(name)
 
 
+class DiagramSeries(object):
+    """
+    Configuration chart series.
+
+    This class allows to control how one sequence of values (typically one
+    table column) is displayed in a chart (for example appearance of a line).
+    """
+
+    __slots__ = ('_target',)
+
+    def __init__(self, target):
+        self._target = target
+
+    def __get_axis(self):
+        """
+        Gets to which axis this series are assigned.
+        """
+        return self._target.getPropertyValue('Axis')
+    def __set_axis(self, value):
+        """
+        Sets to which axis this series are assigned.
+        """
+        self._target.setPropertyValue('Axis', value)
+    axis = property(__get_axis, __set_axis)
+
+
+class DiagramSeriesCollection(object):
+    """
+    Provides access to individual diagram series.
+
+    Instance of this class is returned when series property of
+    the Diagram class is accessed.
+    """
+
+    __slots__ = ('_target',)
+
+    def __init__(self, target):
+        self._target = target
+
+    # NOTE: It seems that length of series can not be easily determined.
+
+    def __getitem__(self, key):
+        try:
+            target = self._target.getDataRowProperties(key)
+        except _IndexOutOfBoundsException:
+            raise IndexError(key)
+        else:
+            return DiagramSeries(target)
+
+
+class Diagram(object):
+    """
+    Diagram - inner content of a chart.
+
+    Each chart has a diagram which specifies how data are rendered.
+    The inner diagram can be changed or replaced while the
+    the outer chart instance is still the same.
+    """
+
+    __slots__ = ('_target',)
+
+    def __init__(self, target):
+        self._target = target
+
+    @property
+    def series(self):
+        """
+        Collection of diagram series.
+        """
+        return DiagramSeriesCollection(self._target)
+
+    # Following code is specific to 2D diagrams. If support for another
+    # diagram types is added (e.g. pie) then a new class should
+    # be probably introduced.
+
+    def __get_is_stacked(self):
+        """
+        Gets whether series of the diagram are stacked.
+        """
+        return self._target.getPropertyValue('Stacked')
+    def __set_is_stacked(self, value):
+        """
+        Sets whether series of the diagram are stacked.
+        """
+        self._target.setPropertyValue('Stacked', value)
+    is_stacked = property(__get_is_stacked, __set_is_stacked)
+
+    def __get_has_secondary_x_axis(self):
+        """
+        Gets whether secondary X axis is displayed.
+        """
+        return self._target.getPropertyValue('HasSecondaryXAxis')
+    def __set_has_secondary_x_axis(self, value):
+        """
+        Sets whether secondary X axis is displayed.
+        """
+        self._target.setPropertyValue('HasSecondaryXAxis', value)
+    has_secondary_x_axis = property(__get_has_secondary_x_axis,
+                                    __set_has_secondary_x_axis)
+
+    def __get_has_secondary_y_axis(self):
+        """
+        Gets whether secondary Y axis is displayed.
+        """
+        return self._target.getPropertyValue('HasSecondaryYAxis')
+    def __set_has_secondary_y_axis(self, value):
+        """
+        Sets whether secondary Y axis is displayed.
+        """
+        self._target.setPropertyValue('HasSecondaryYAxis', value)
+    has_secondary_y_axis = property(__get_has_secondary_y_axis,
+                                    __set_has_secondary_y_axis)
+
+
+class BarDiagram(Diagram):
+    """
+    Bar or column diagram.
+
+    Type of diagram can be changed using Chart.change_type method.
+    """
+    _type = 'com.sun.star.chart.BarDiagram'
+
+
+class LineDiagram(Diagram):
+    """
+    Line, spline or symbol diagram.
+
+    Type of diagram can be changed using Chart.change_type method.
+    """
+
+    _type = 'com.sun.star.chart.LineDiagram'
+
+
+# Registry of supported diagram types.
+_DIAGRAM_TYPES = {
+    BarDiagram._type: BarDiagram,
+    LineDiagram._type: LineDiagram,
+}
+
 
 class Chart(object):
     """
     Chart
     """
 
-    __slots__ = ('sheet', '_target')
+    __slots__ = ('sheet', '_target', '_embedded')
 
     def __init__(self, sheet, target):
         self.sheet = sheet
         self._target = target
+        # Embedded object provides most of the functionality it will be
+        # probably often needed -- cache it for better performance.
+        self._embedded = self._target.getEmbeddedObject()
 
     @property
     def name(self):
@@ -951,6 +1097,29 @@ class Chart(object):
         """
         ranges = self._target.getRanges()
         return map(SheetAddress._from_uno, ranges)
+
+    @property
+    def diagram(self):
+        """
+        Diagram - inner content of this chart.
+
+        The diagram can be replaced by another type using change_type method.
+        """
+        target = self._embedded.getDiagram()
+        target_type = target.getDiagramType()
+        cls = _DIAGRAM_TYPES.get(target_type, Diagram)
+        return cls(target)
+
+    def change_type(self, cls):
+        """
+        Change type of diagram in this chart.
+
+        Accepts one of classes which extend Diagram.
+        """
+        target_type = cls._type
+        target = self._embedded.createInstance(target_type)
+        self._embedded.setDiagram(target)
+        return cls(target)
 
 
 class ChartCollection(NamedCollection):

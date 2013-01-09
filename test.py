@@ -583,6 +583,64 @@ class ChartsTestCase(BaseTestCase):
         self.assertEqual('Chart from cells', chart.name)
         self.assertEqual(['$A$1:$C$2'], map(str, chart.ranges))
 
+    def test_default_diagram_type(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Default type', position, address)
+        self.assertIsInstance(chart.diagram, pyoo.BarDiagram)
+
+    def test_change_diagram_type(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Change type', position, address)
+        chart.change_type(pyoo.LineDiagram)
+        self.assertIsInstance(chart.diagram, pyoo.LineDiagram)
+
+    def test_stacked_diagram(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Stacked', position, address)
+        diagram = chart.diagram
+        self.assertFalse(diagram.is_stacked)
+        diagram.is_stacked = True
+        self.assertTrue(diagram.is_stacked)
+
+    def test_secondary_x_axis(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Secondary X axis', position, address)
+        diagram = chart.diagram
+        self.assertFalse(diagram.has_secondary_x_axis)
+        diagram.has_secondary_x_axis = True
+        self.assertTrue(diagram.has_secondary_x_axis)
+
+    def test_secondary_y_axis(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Secondary Y axis', position, address)
+        diagram = chart.diagram
+        self.assertFalse(diagram.has_secondary_y_axis)
+        diagram.has_secondary_y_axis = True
+        self.assertTrue(diagram.has_secondary_y_axis)
+
+    def test_series_too_large_index(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Series too large index', position, address)
+        with self.assertRaises(IndexError):
+            chart.diagram.series[3]
+
+    def test_series_axis(self):
+        position = pyoo.SheetPosition(0, 0, 1000, 1000)
+        address = pyoo.SheetAddress(0, 0, 2, 3)
+        chart = self.sheet.charts.create('Series axis', position, address)
+        series = chart.diagram.series[0]
+        self.assertEqual(pyoo.AXIS_PRIMARY, series.axis)
+        series.axis = pyoo.AXIS_SECONDARY
+        self.assertEqual(pyoo.AXIS_SECONDARY, series.axis)
+
+
+
 
 
 class SpreadsheetCollectionTestCase(BaseTestCase):
