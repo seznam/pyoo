@@ -63,7 +63,6 @@ _NoConnectException = uno.getClass('com.sun.star.connection.NoConnectException')
 _ConnectionSetupException = uno.getClass('com.sun.star.connection.ConnectionSetupException')
 
 
-
 class ConnectionError(Exception):
     """
     Unable to connect to UNO API.
@@ -263,14 +262,322 @@ class SheetAddress(object):
     def _to_uno(self, sheet):
         struct = uno.createUnoStruct('com.sun.star.table.CellRangeAddress')
         struct.Sheet = sheet
-        struct.StartColumn=self.col
-        struct.StartRow=self.row
-        struct.EndColumn=self.col_end
-        struct.EndRow=self.row_end
+        struct.StartColumn = self.col
+        struct.StartRow = self.row
+        struct.EndColumn = self.col_end
+        struct.EndRow = self.row_end
         return struct
 
 
-class SheetCursor(object):
+class _UnoProxy(object):
+    """
+    Abstract base class for objects which act as a proxy to UNO objects.
+    """
+    __slots__ = ('_target',)
+
+    def __init__(self, target):
+        self._target = target
+
+    def __repr__(self):
+        return '<%s: %r>' % (self.__class__.__name__,
+                             self._target.getSupportedServiceNames())
+
+
+class NamedCollection(_UnoProxy):
+    """
+    Base class for collections accessible by both index and name.
+    """
+
+    # Target must implement both of:
+    # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XIndexAccess.html
+    # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XNameAccess.html
+
+    __slots__ = ()
+
+    def __len__(self):
+        return self._target.getCount()
+
+    def __getitem__(self, key):
+        if isinstance(key, (int, long)):
+            target = self._get_by_index(key)
+            return self._factory(target)
+        if isinstance(key, basestring):
+            target = self._get_by_name(key)
+            return self._factory(target)
+        raise TypeError('%s must be accessed either by index or name.'
+                        % self.__class__.__name__)
+
+    # Internal:
+
+    def _factory(self, target):
+        raise NotImplementedError # pragma: no cover
+
+    def _get_by_index(self, index):
+        try:
+            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XIndexAccess.html#getByIndex
+            return self._target.getByIndex(index)
+        except _IndexOutOfBoundsException:
+            raise IndexError(index)
+
+    def _get_by_name(self, name):
+        try:
+            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XNameAccess.html#getByName
+            return self._target.getByName(name)
+        except _NoSuchElementException:
+            raise KeyError(name)
+
+
+class DiagramSeries(_UnoProxy):
+    """
+    Diagram series.
+
+    This class allows to control how one sequence of values (typically
+    one table column) is displayed in a chart (for example appearance
+    of one line).
+    """
+
+    __slots__ = ()
+
+    def __get_axis(self):
+        """
+        Gets to which axis this series are assigned.
+        """
+        return self._target.getPropertyValue('Axis')
+    def __set_axis(self, value):
+        """
+        Sets to which axis this series are assigned.
+        """
+        self._target.setPropertyValue('Axis', value)
+    axis = property(__get_axis, __set_axis)
+
+
+class DiagramSeriesCollection(_UnoProxy):
+    """
+    Provides access to individual diagram series.
+
+    Instance of this class is returned when series property of
+    the Diagram class is accessed.
+    """
+
+    __slots__ = ()
+
+    # It seems that length of series can not be easily determined so
+    # here is no __len__ method.
+
+    def __getitem__(self, key):
+        try:
+            target = self._target.getDataRowProperties(key)
+        except _IndexOutOfBoundsException:
+            raise IndexError(key)
+        else:
+            return DiagramSeries(target)
+
+
+class Diagram(_UnoProxy):
+    """
+    Diagram - inner content of a chart.
+
+    Each chart has a diagram which specifies how data are rendered.
+    The inner diagram can be changed or replaced while the
+    the outer chart instance is still the same.
+    """
+
+    __slots__ = ()
+
+    @property
+    def series(self):
+        """
+        Collection of diagram series.
+        """
+        return DiagramSeriesCollection(self._target)
+
+    # Following code is specific to 2D diagrams. If support for another
+    # diagram types is added (e.g. pie) then a new class should
+    # be probably introduced.
+
+    def __get_is_stacked(self):
+        """
+        Gets whether series of the diagram are stacked.
+        """
+        return self._target.getPropertyValue('Stacked')
+    def __set_is_stacked(self, value):
+        """
+        Sets whether series of the diagram are stacked.
+        """
+        self._target.setPropertyValue('Stacked', value)
+    is_stacked = property(__get_is_stacked, __set_is_stacked)
+
+    def __get_has_secondary_x_axis(self):
+        """
+        Gets whether secondary X axis is displayed.
+        """
+        return self._target.getPropertyValue('HasSecondaryXAxis')
+    def __set_has_secondary_x_axis(self, value):
+        """
+        Sets whether secondary X axis is displayed.
+        """
+        self._target.setPropertyValue('HasSecondaryXAxis', value)
+    has_secondary_x_axis = property(__get_has_secondary_x_axis,
+                                    __set_has_secondary_x_axis)
+
+    def __get_has_secondary_y_axis(self):
+        """
+        Gets whether secondary Y axis is displayed.
+        """
+        return self._target.getPropertyValue('HasSecondaryYAxis')
+    def __set_has_secondary_y_axis(self, value):
+        """
+        Sets whether secondary Y axis is displayed.
+        """
+        self._target.setPropertyValue('HasSecondaryYAxis', value)
+    has_secondary_y_axis = property(__get_has_secondary_y_axis,
+                                    __set_has_secondary_y_axis)
+
+
+class BarDiagram(Diagram):
+    """
+    Bar or column diagram.
+
+    Type of diagram can be changed using Chart.change_type method.
+    """
+
+    __slots__ = ()
+
+    _type = 'com.sun.star.chart.BarDiagram'
+
+
+class LineDiagram(Diagram):
+    """
+    Line, spline or symbol diagram.
+
+    Type of diagram can be changed using Chart.change_type method.
+    """
+
+    __slots__ = ()
+
+    _type = 'com.sun.star.chart.LineDiagram'
+
+
+# Registry of supported diagram types.
+_DIAGRAM_TYPES = {
+    BarDiagram._type: BarDiagram,
+    LineDiagram._type: LineDiagram,
+}
+
+
+class Chart(_UnoProxy):
+    """
+    Chart
+    """
+
+    __slots__ = ('sheet', '_embedded')
+
+    def __init__(self, sheet, target):
+        self.sheet = sheet
+        # Embedded object provides most of the functionality it will be
+        # probably often needed -- cache it for better performance.
+        self._embedded = target.getEmbeddedObject()
+        super(Chart, self).__init__(target)
+
+    @property
+    def name(self):
+        """
+        Chart name which can be used as a key for accessing this chart.
+        """
+        return self._target.getName()
+
+    @property
+    def has_row_header(self):
+        """
+        Returns whether the first row is used for header
+        """
+        return self._target.getHasRowHeaders()
+
+    @property
+    def has_col_header(self):
+        """
+        Returns whether the first column is used for header
+        """
+        return self._target.getHasColumnHeaders()
+
+    @property
+    def ranges(self):
+        """
+        Returns a list of addresses with source data.
+        """
+        ranges = self._target.getRanges()
+        return map(SheetAddress._from_uno, ranges)
+
+    @property
+    def diagram(self):
+        """
+        Diagram - inner content of this chart.
+
+        The diagram can be replaced by another type using change_type method.
+        """
+        target = self._embedded.getDiagram()
+        target_type = target.getDiagramType()
+        cls = _DIAGRAM_TYPES.get(target_type, Diagram)
+        return cls(target)
+
+    def change_type(self, cls):
+        """
+        Change type of diagram in this chart.
+
+        Accepts one of classes which extend Diagram.
+        """
+        target_type = cls._type
+        target = self._embedded.createInstance(target_type)
+        self._embedded.setDiagram(target)
+        return cls(target)
+
+
+class ChartCollection(NamedCollection):
+    """
+    Collection of charts in one sheet.
+    """
+
+    __slots__ = ('sheet',)
+
+    def __init__(self, sheet, target):
+        self.sheet = sheet
+        super(ChartCollection, self).__init__(target)
+
+    def create(self, name, position, ranges=(), col_header=False, row_header=False):
+        """
+        Creates a and inserts a new chart.
+        """
+        rect = self._uno_rect(position)
+        ranges = self._uno_ranges(ranges)
+        self._create(name, rect, ranges, col_header, row_header)
+        return self[name]
+
+    # Internal:
+
+    def _factory(self, target):
+        return Chart(self.sheet, target)
+
+    def _uno_rect(self, position):
+        if isinstance(position, CellRange):
+            position = position.position
+        return position._to_uno()
+
+    def _uno_ranges(self, ranges):
+        if not isinstance(ranges, (list, tuple)):
+            ranges = [ranges]
+        return tuple(map(self._uno_range, ranges))
+
+    def _uno_range(self, address):
+        if isinstance(address, CellRange):
+            address = address.address
+        return address._to_uno(self.sheet.index)
+
+    def _create(self, name, rect, ranges, col_header, row_header):
+        # http://www.openoffice.org/api/docs/common/ref/com/sun/star/table/XTableCharts.html#addNewByName
+        self._target.addNewByName(name, rect, ranges, col_header, row_header)
+
+
+class SheetCursor(_UnoProxy):
     """
     Cursor in spreadsheet sheet.
 
@@ -278,12 +585,12 @@ class SheetCursor(object):
     because cursor movement is much faster then cell range selection.
     """
 
-    __slots__ = ('_target', 'row', 'col', 'row_count', 'col_count',
+    __slots__ = ('row', 'col', 'row_count', 'col_count',
                  'max_row_count', 'max_col_count')
 
     def __init__(self, target):
-        self._target = target # com.sun.star.sheet.XSheetCellCursor
-        ra = self._target.getRangeAddress()
+        # Target must be com.sun.star.sheet.XSheetCellCursor
+        ra = target.getRangeAddress()
         self.row = 0
         self.col = 0
         self.row_count = ra.EndRow + 1
@@ -291,6 +598,7 @@ class SheetCursor(object):
         # Default cursor contains all the cells.
         self.max_row_count = self.row_count
         self.max_col_count = self.col_count
+        super(SheetCursor, self).__init__(target)
 
     def get_target(self, row, col, row_count, col_count):
         """
@@ -337,6 +645,8 @@ class CellRange(object):
 
     This is an abstract base class implements cell manipulation functionality.
     """
+    # Does not extend _UnoProxy because it uses sheet cursor internally
+    # instead of direct reference to UNO object.
 
     __slots__ = ('sheet', 'address')
 
@@ -869,304 +1179,6 @@ class VerticalCellRange(CellRange):
     formulas = property(__get_formulas, __set_formulas)
 
 
-class NamedCollection(object):
-    """
-    Base class for collections accessible by both index and name.
-    """
-
-    __slots__ = ('_target',)
-
-    def __init__(self, target):
-        # Target must implement both of:
-        # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XIndexAccess.html
-        # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XNameAccess.html
-        self._target = target
-
-    def __len__(self):
-        return self._target.getCount()
-
-    def __getitem__(self, key):
-        if isinstance(key, (int, long)):
-            target = self._get_by_index(key)
-            return self._factory(target)
-        if isinstance(key, basestring):
-            target = self._get_by_name(key)
-            return self._factory(target)
-        raise TypeError('%s must be accessed either by index or name.'
-                        % self.__class__.__name__)
-
-    # Internal:
-
-    def _factory(self, target):
-        raise NotImplementedError # pragma: no cover
-
-    def _get_by_index(self, index):
-        try:
-            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XIndexAccess.html#getByIndex
-            return self._target.getByIndex(index)
-        except _IndexOutOfBoundsException:
-            raise IndexError(index)
-
-    def _get_by_name(self, name):
-        try:
-            # http://www.openoffice.org/api/docs/common/ref/com/sun/star/container/XNameAccess.html#getByName
-            return self._target.getByName(name)
-        except _NoSuchElementException:
-            raise KeyError(name)
-
-
-class DiagramSeries(object):
-    """
-    Configuration chart series.
-
-    This class allows to control how one sequence of values (typically one
-    table column) is displayed in a chart (for example appearance of a line).
-    """
-
-    __slots__ = ('_target',)
-
-    def __init__(self, target):
-        self._target = target
-
-    def __get_axis(self):
-        """
-        Gets to which axis this series are assigned.
-        """
-        return self._target.getPropertyValue('Axis')
-    def __set_axis(self, value):
-        """
-        Sets to which axis this series are assigned.
-        """
-        self._target.setPropertyValue('Axis', value)
-    axis = property(__get_axis, __set_axis)
-
-
-class DiagramSeriesCollection(object):
-    """
-    Provides access to individual diagram series.
-
-    Instance of this class is returned when series property of
-    the Diagram class is accessed.
-    """
-
-    __slots__ = ('_target',)
-
-    def __init__(self, target):
-        self._target = target
-
-    # NOTE: It seems that length of series can not be easily determined.
-
-    def __getitem__(self, key):
-        try:
-            target = self._target.getDataRowProperties(key)
-        except _IndexOutOfBoundsException:
-            raise IndexError(key)
-        else:
-            return DiagramSeries(target)
-
-
-class Diagram(object):
-    """
-    Diagram - inner content of a chart.
-
-    Each chart has a diagram which specifies how data are rendered.
-    The inner diagram can be changed or replaced while the
-    the outer chart instance is still the same.
-    """
-
-    __slots__ = ('_target',)
-
-    def __init__(self, target):
-        self._target = target
-
-    @property
-    def series(self):
-        """
-        Collection of diagram series.
-        """
-        return DiagramSeriesCollection(self._target)
-
-    # Following code is specific to 2D diagrams. If support for another
-    # diagram types is added (e.g. pie) then a new class should
-    # be probably introduced.
-
-    def __get_is_stacked(self):
-        """
-        Gets whether series of the diagram are stacked.
-        """
-        return self._target.getPropertyValue('Stacked')
-    def __set_is_stacked(self, value):
-        """
-        Sets whether series of the diagram are stacked.
-        """
-        self._target.setPropertyValue('Stacked', value)
-    is_stacked = property(__get_is_stacked, __set_is_stacked)
-
-    def __get_has_secondary_x_axis(self):
-        """
-        Gets whether secondary X axis is displayed.
-        """
-        return self._target.getPropertyValue('HasSecondaryXAxis')
-    def __set_has_secondary_x_axis(self, value):
-        """
-        Sets whether secondary X axis is displayed.
-        """
-        self._target.setPropertyValue('HasSecondaryXAxis', value)
-    has_secondary_x_axis = property(__get_has_secondary_x_axis,
-                                    __set_has_secondary_x_axis)
-
-    def __get_has_secondary_y_axis(self):
-        """
-        Gets whether secondary Y axis is displayed.
-        """
-        return self._target.getPropertyValue('HasSecondaryYAxis')
-    def __set_has_secondary_y_axis(self, value):
-        """
-        Sets whether secondary Y axis is displayed.
-        """
-        self._target.setPropertyValue('HasSecondaryYAxis', value)
-    has_secondary_y_axis = property(__get_has_secondary_y_axis,
-                                    __set_has_secondary_y_axis)
-
-
-class BarDiagram(Diagram):
-    """
-    Bar or column diagram.
-
-    Type of diagram can be changed using Chart.change_type method.
-    """
-    _type = 'com.sun.star.chart.BarDiagram'
-
-
-class LineDiagram(Diagram):
-    """
-    Line, spline or symbol diagram.
-
-    Type of diagram can be changed using Chart.change_type method.
-    """
-
-    _type = 'com.sun.star.chart.LineDiagram'
-
-
-# Registry of supported diagram types.
-_DIAGRAM_TYPES = {
-    BarDiagram._type: BarDiagram,
-    LineDiagram._type: LineDiagram,
-}
-
-
-class Chart(object):
-    """
-    Chart
-    """
-
-    __slots__ = ('sheet', '_target', '_embedded')
-
-    def __init__(self, sheet, target):
-        self.sheet = sheet
-        self._target = target
-        # Embedded object provides most of the functionality it will be
-        # probably often needed -- cache it for better performance.
-        self._embedded = self._target.getEmbeddedObject()
-
-    @property
-    def name(self):
-        """
-        Chart name which can be used as a key.
-        """
-        return self._target.getName()
-
-    @property
-    def has_row_header(self):
-        """
-        Returns whether the first row is used for header
-        """
-        return self._target.getHasRowHeaders()
-
-    @property
-    def has_col_header(self):
-        """
-        Returns whether the first column is used for header
-        """
-        return self._target.getHasColumnHeaders()
-
-    @property
-    def ranges(self):
-        """
-        Returns a list of addresses with source data.
-        """
-        ranges = self._target.getRanges()
-        return map(SheetAddress._from_uno, ranges)
-
-    @property
-    def diagram(self):
-        """
-        Diagram - inner content of this chart.
-
-        The diagram can be replaced by another type using change_type method.
-        """
-        target = self._embedded.getDiagram()
-        target_type = target.getDiagramType()
-        cls = _DIAGRAM_TYPES.get(target_type, Diagram)
-        return cls(target)
-
-    def change_type(self, cls):
-        """
-        Change type of diagram in this chart.
-
-        Accepts one of classes which extend Diagram.
-        """
-        target_type = cls._type
-        target = self._embedded.createInstance(target_type)
-        self._embedded.setDiagram(target)
-        return cls(target)
-
-
-class ChartCollection(NamedCollection):
-    """
-    Collection of charts in one sheet.
-    """
-
-    __slots__ = ('sheet',)
-
-    def __init__(self, sheet, target):
-        self.sheet = sheet
-        super(ChartCollection, self).__init__(target)
-
-    def create(self, name, position, ranges=(), col_header=False, row_header=False):
-        """
-        Creates a and inserts a new chart.
-        """
-        rect = self._uno_rect(position)
-        ranges = self._uno_ranges(ranges)
-        self._create(name, rect, ranges, col_header, row_header)
-        return self[name]
-
-    # Internal:
-
-    def _factory(self, target):
-        return Chart(self.sheet, target)
-
-    def _uno_rect(self, position):
-        if isinstance(position, CellRange):
-            position = position.position
-        return position._to_uno()
-
-    def _uno_ranges(self, ranges):
-        if not isinstance(ranges, (list, tuple)):
-            ranges = [ranges]
-        return tuple(map(self._uno_range, ranges))
-
-    def _uno_range(self, address):
-        if isinstance(address, CellRange):
-            address = address.address
-        return address._to_uno(self.sheet.index)
-
-    def _create(self, name, rect, ranges, col_header, row_header):
-        # http://www.openoffice.org/api/docs/common/ref/com/sun/star/table/XTableCharts.html#addNewByName
-        self._target.addNewByName(name, rect, ranges, col_header, row_header)
-
-
 class Sheet(TabularCellRange):
     """
     One sheet in a spreadsheet document.
@@ -1226,6 +1238,8 @@ class SpreadsheetCollection(NamedCollection):
     Instance of this class is returned via sheets property of
     the SpreadsheetDocument class.
     """
+
+    __slots__ = ('document',)
 
     def __init__(self, document, target):
         self.document = document # Parent SpreadsheetDocument
@@ -1288,6 +1302,8 @@ class Locale(object):
     retrieved from SpreadsheetDocument using get_locale method.
     """
 
+    __slots__ = ('_locale', '_formats')
+
     def __init__(self, locale, formats):
         self._locale = locale
         self._formats = formats
@@ -1302,13 +1318,10 @@ class Locale(object):
         return self._formats.getFormatIndex(code, self._locale)
 
 
-class SpreadsheetDocument(object):
+class SpreadsheetDocument(_UnoProxy):
     """
     Spreadsheet document.
     """
-
-    def __init__(self, document):
-        self._document = document
 
     def save(self, path, filter_name=None):
         """
@@ -1329,7 +1342,7 @@ class SpreadsheetDocument(object):
             filters = ()
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/frame/XStorable.html#storeToURL
         try:
-            self._document.storeToURL(url, filters)
+            self._target.storeToURL(url, filters)
         except _IOException, e:
             raise IOError(e.Message)
 
@@ -1338,7 +1351,7 @@ class SpreadsheetDocument(object):
         Closes this document.
         """
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/util/XCloseable.html#close
-        self._document.close(True)
+        self._target.close(True)
 
     def get_locale(self, language=None, country=None, variant=None):
         """
@@ -1352,7 +1365,7 @@ class SpreadsheetDocument(object):
             locale.Country = country
         if variant:
             locale.Variant = variant
-        formats = self._document.getNumberFormats()
+        formats = self._target.getNumberFormats()
         return Locale(locale, formats)
 
     @property
@@ -1364,7 +1377,7 @@ class SpreadsheetDocument(object):
         try:
             return self._sheets
         except AttributeError:
-            target = self._document.getSheets()
+            target = self._target.getSheets()
             self._sheets = SpreadsheetCollection(self, target)
         return self._sheets
 
@@ -1419,7 +1432,7 @@ class SpreadsheetDocument(object):
         try:
             return self.__null_date
         except AttributeError:
-            number_settings = self._document.getNumberFormatSettings()
+            number_settings = self._target.getNumberFormatSettings()
             d = number_settings.getPropertyValue('NullDate')
             self.__null_date = datetime.datetime(d.Year, d.Month, d.Day)
         return self.__null_date
@@ -1429,7 +1442,7 @@ def _get_connection_url(hostname, port):
     return 'uno:socket,host=%s,port=%d;urp;StarOffice.ComponentContext' % (hostname, port)
 
 
-class Desktop(object):
+class Desktop(_UnoProxy):
     """
     Access to a running to an OpenOffice.org program.
 
@@ -1449,7 +1462,7 @@ class Desktop(object):
         except (_NoConnectException, _ConnectionSetupException), e:
             raise ConnectionError(e.Message)
         desktop = remote_context.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", remote_context)
-        self._desktop = desktop
+        super(Desktop, self).__init__(desktop)
 
     def create_spreadsheet(self):
         """
@@ -1477,7 +1490,7 @@ class Desktop(object):
     def _open_url(self, url, extra=()):
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/frame/XComponentLoader.html#loadComponentFromURL
         try:
-            return self._desktop.loadComponentFromURL(url, '_blank', 0, extra)
+            return self._target.loadComponentFromURL(url, '_blank', 0, extra)
         except _IOException, e:
             raise IOError(e.Message)
 
