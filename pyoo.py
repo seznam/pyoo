@@ -573,6 +573,11 @@ class ChartCollection(NamedCollection):
         self.sheet = sheet
         super(ChartCollection, self).__init__(target)
 
+    def __delitem__(self, key):
+        if not isinstance(key, basestring):
+            key = self[key].name
+        self._delete(key)
+
     def create(self, name, position, ranges=(), col_header=False, row_header=False):
         """
         Creates a and inserts a new chart.
@@ -605,6 +610,12 @@ class ChartCollection(NamedCollection):
     def _create(self, name, rect, ranges, col_header, row_header):
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/table/XTableCharts.html#addNewByName
         self._target.addNewByName(name, rect, ranges, col_header, row_header)
+
+    def _delete(self, name):
+        try:
+            self._target.removeByName(name)
+        except _NoSuchElementException:
+            raise KeyError(name)
 
 
 class SheetCursor(_UnoProxy):
