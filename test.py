@@ -522,8 +522,17 @@ class CellRangeTestCase(BaseTestCase):
 
 class ChartsTestCase(BaseTestCase):
 
+    _chart_index = 0
+
     def setUp(self):
         self.sheet = self.document.sheets[0]
+
+    def create_chart(self, name=None, position=None, ranges=None, **kwargs):
+        self.__class__._chart_index += 1
+        name = name or 'Chart %d' % self.__class__._chart_index
+        position = position or pyoo.SheetPosition(0, 0, 1000, 1000)
+        ranges = ranges or pyoo.SheetAddress(0, 0, 2, 3)
+        return self.sheet.charts.create(name, position, ranges, **kwargs)
 
     def test_get_sheet_by_negative_index(self):
         with self.assertRaises(IndexError):
@@ -539,133 +548,95 @@ class ChartsTestCase(BaseTestCase):
             self.sheet.charts['Missing']
 
     def test_create_chart(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Created chart', position, address)
+        chart = self.create_chart(name='Created chart')
         self.assertEqual('Created chart', chart.name)
         self.assertEqual(['$A$1:$C$2'], map(str, chart.ranges))
 
     def test_create_chart_w_multiple_ranges(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
         ranges = [pyoo.SheetAddress(0, 0, 2, 3), pyoo.SheetAddress(10, 10, 2, 3)]
-        chart = self.sheet.charts.create('Chart with multiple ranges', position, ranges)
-        self.assertEqual('Chart with multiple ranges', chart.name)
+        chart = self.create_chart(ranges=ranges)
         self.assertEqual(['$A$1:$C$2', '$K$11:$M$12'], map(str, chart.ranges))
 
     def test_create_chart_w_row_header(self):
-        position = pyoo.SheetPosition(0, 0, 10000, 10000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Chart with row header', position,
-                                         address, row_header=True)
-        self.assertEqual('Chart with row header', chart.name)
+        chart = self.create_chart(row_header=True)
         self.assertTrue(chart.has_row_header)
         self.assertFalse(chart.has_col_header)
 
     def test_create_chart_w_col_header(self):
-        position = pyoo.SheetPosition(0, 0, 10000, 10000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Chart with col header', position,
-                                         address, col_header=True)
-        self.assertEqual('Chart with col header', chart.name)
+        chart = self.create_chart(col_header=True)
         self.assertFalse(chart.has_row_header)
         self.assertTrue(chart.has_col_header)
 
     def test_create_chart_w_cells_as_position(self):
         position = self.sheet[:10,:5]
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Chart over cells', position, address)
+        chart = self.create_chart(name='Chart over cells', position=position)
         self.assertEqual('Chart over cells', chart.name)
 
     def test_create_chart_w_cells_as_address(self):
-        position = pyoo.SheetPosition(0, 0, 10000, 10000)
         address = self.sheet[:2,:3]
-        chart = self.sheet.charts.create('Chart from cells', position, address)
-        self.assertEqual('Chart from cells', chart.name)
+        chart = self.create_chart(ranges=address)
         self.assertEqual(['$A$1:$C$2'], map(str, chart.ranges))
 
     def test_default_diagram_type(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Default type', position, address)
+        chart = self.create_chart()
         self.assertIsInstance(chart.diagram, pyoo.BarDiagram)
 
     def test_change_diagram_type(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Change type', position, address)
+        chart = self.create_chart()
         chart.change_type(pyoo.LineDiagram)
         self.assertIsInstance(chart.diagram, pyoo.LineDiagram)
 
     def test_stacked_diagram(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Stacked', position, address)
+        chart = self.create_chart()
         diagram = chart.diagram
         self.assertFalse(diagram.is_stacked)
         diagram.is_stacked = True
         self.assertTrue(diagram.is_stacked)
 
     def test_diagram_spline(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Spline', position, address)
+        chart = self.create_chart()
         diagram = chart.change_type(pyoo.LineDiagram)
         self.assertFalse(diagram.spline)
         diagram.spline = True
         self.assertTrue(diagram.spline)
 
     def test_secondary_x_axis(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Secondary X axis', position, address)
+        chart = self.create_chart()
         diagram = chart.diagram
         self.assertFalse(diagram.has_secondary_x_axis)
         diagram.has_secondary_x_axis = True
         self.assertTrue(diagram.has_secondary_x_axis)
 
     def test_secondary_y_axis(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Secondary Y axis', position, address)
+        chart = self.create_chart()
         diagram = chart.diagram
         self.assertFalse(diagram.has_secondary_y_axis)
         diagram.has_secondary_y_axis = True
         self.assertTrue(diagram.has_secondary_y_axis)
 
     def test_series_too_large_index(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Series too large index', position, address)
+        chart = self.create_chart()
         with self.assertRaises(IndexError):
             chart.diagram.series[3]
 
     def test_series_axis(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Series axis', position, address)
+        chart = self.create_chart()
         series = chart.diagram.series[0]
         self.assertEqual(pyoo.AXIS_PRIMARY, series.axis)
         series.axis = pyoo.AXIS_SECONDARY
         self.assertEqual(pyoo.AXIS_SECONDARY, series.axis)
 
     def test_series_line_color(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Line color', position, address)
+        chart = self.create_chart()
         series = chart.diagram.series[0]
         series.line_color = 0xFF0000
         self.assertEqual(0xFF0000, series.line_color)
 
     def test_series_fill_color(self):
-        position = pyoo.SheetPosition(0, 0, 1000, 1000)
-        address = pyoo.SheetAddress(0, 0, 2, 3)
-        chart = self.sheet.charts.create('Fill color', position, address)
+        chart = self.create_chart()
         series = chart.diagram.series[0]
         series.fill_color = 0xFF0000
         self.assertEqual(0xFF0000, series.fill_color)
-
-
-
 
 
 class SpreadsheetCollectionTestCase(BaseTestCase):
