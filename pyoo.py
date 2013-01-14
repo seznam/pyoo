@@ -397,6 +397,130 @@ class DiagramSeriesCollection(_UnoProxy):
             return DiagramSeries(target)
 
 
+class Axis(_UnoProxy):
+    """
+    Chart axis
+    """
+
+    __slots__ = ()
+
+    def __get_visible(self):
+        """
+        Gets whether this axis is visible.
+        """
+        # Getting `target.HasXAxis` is a lot of faster then accessing
+        # `target.XAxis.Visible` property.
+        return self._target.getPropertyValue(self._has_axis_property)
+    def __set_visible(self, value):
+        """
+        Sets whether this axis is visible.
+        """
+        return self._target.setPropertyValue(self._has_axis_property, value)
+    visible = property(__get_visible, __set_visible)
+
+    def __get_logarithmic(self):
+        """
+        Gets whether this axis has an logarithmic scale.
+        """
+        target = self._get_axis_target()
+        return target.getPropertyValue('Logarithmic')
+    def __set_logarithmic(self, value):
+        """
+        Sets whether this axis has an logarithmic scale.
+        """
+        target = self._get_axis_target()
+        target.setPropertyValue('Logarithmic', value)
+    logarithmic = property(__get_logarithmic, __set_logarithmic)
+
+    def __get_title(self):
+        """
+        Gets title of this axis.
+        """
+        target = self._get_title_target()
+        return target.getPropertyValue('String')
+    def __set_title(self, value):
+        """
+        Sets title of this axis.
+        """
+        # OpenOffice on Debian "squeeze" ignore value of `target.XAxis.String`
+        # unless `target.HasXAxisTitle` is set to True first. (Despite the
+        # fact that `target.HasXAxisTitle` is reported to be False until
+        # `target.XAxis.String` is set to non empty value.)
+        self._target.setPropertyValue(self._has_axis_title_property, True)
+        target = self._get_title_target()
+        target.setPropertyValue('String', value)
+    title = property(__get_title, __set_title)
+
+    # The _target property of this class does not hold the axis itself but
+    # the owner diagram instance. So following methods and properties has
+    # to be overridden in order to access appropriate UNO objects.
+
+    _has_axis_property = None
+    _has_axis_title_property = None
+
+    def _get_axis_target(self):
+        raise NotImplementedError # pragma: no cover
+
+    def _get_title_target(self):
+        raise NotImplementedError # pragma: no cover
+
+
+class XAxis(Axis):
+
+    __slots__ = ()
+
+    _has_axis_property = 'HasXAxis'
+    _has_axis_title_property = 'HasXAxisTitle'
+
+    def _get_axis_target(self):
+        return self._target.getXAxis()
+
+    def _get_title_target(self):
+        return self._target.getXAxisTitle()
+
+
+class YAxis(Axis):
+
+    __slots__ = ()
+
+    _has_axis_property = 'HasYAxis'
+    _has_axis_title_property = 'HasYAxisTitle'
+
+    def _get_axis_target(self):
+        return self._target.getYAxis()
+
+    def _get_title_target(self):
+        return self._target.getYAxisTitle()
+
+
+class SecondaryXAxis(Axis):
+
+    __slots__ = ()
+
+    _has_axis_property = 'HasSecondaryXAxis'
+    _has_axis_title_property = 'HasSecondaryXAxisTitle'
+
+    def _get_axis_target(self):
+        return self._target.getSecondaryXAxis()
+
+    def _get_title_target(self):
+        return self._target.getSecondXAxisTitle()
+
+
+class SecondaryYAxis(Axis):
+
+    __slots__ = ()
+
+    _has_axis_property = 'HasSecondaryYAxis'
+    _has_axis_title_property = 'HasSecondaryYAxisTitle'
+
+    def _get_axis_target(self):
+        return self._target.getSecondaryYAxis()
+
+    def _get_title_target(self):
+        return self._target.getSecondYAxisTitle()
+
+
 class Diagram(_UnoProxy):
     """
     Diagram - inner content of a chart.
@@ -419,6 +543,34 @@ class Diagram(_UnoProxy):
     # diagram types is added (e.g. pie) then a new class should
     # be probably introduced.
 
+    @property
+    def x_axis(self):
+        """
+        X (bottom) axis
+        """
+        return XAxis(self._target)
+
+    @property
+    def y_axis(self):
+        """
+        Y (left) axis
+        """
+        return YAxis(self._target)
+
+    @property
+    def secondary_x_axis(self):
+        """
+        Secondary X (top) axis
+        """
+        return SecondaryXAxis(self._target)
+
+    @property
+    def secondary_y_axis(self):
+        """
+        Secondary Y (right) axis
+        """
+        return SecondaryYAxis(self._target)
+
     def __get_is_stacked(self):
         """
         Gets whether series of the diagram are stacked.
@@ -430,32 +582,6 @@ class Diagram(_UnoProxy):
         """
         self._target.setPropertyValue('Stacked', value)
     is_stacked = property(__get_is_stacked, __set_is_stacked)
-
-    def __get_has_secondary_x_axis(self):
-        """
-        Gets whether secondary X axis is displayed.
-        """
-        return self._target.getPropertyValue('HasSecondaryXAxis')
-    def __set_has_secondary_x_axis(self, value):
-        """
-        Sets whether secondary X axis is displayed.
-        """
-        self._target.setPropertyValue('HasSecondaryXAxis', value)
-    has_secondary_x_axis = property(__get_has_secondary_x_axis,
-                                    __set_has_secondary_x_axis)
-
-    def __get_has_secondary_y_axis(self):
-        """
-        Gets whether secondary Y axis is displayed.
-        """
-        return self._target.getPropertyValue('HasSecondaryYAxis')
-    def __set_has_secondary_y_axis(self, value):
-        """
-        Sets whether secondary Y axis is displayed.
-        """
-        self._target.setPropertyValue('HasSecondaryYAxis', value)
-    has_secondary_y_axis = property(__get_has_secondary_y_axis,
-                                    __set_has_secondary_y_axis)
 
 
 class BarDiagram(Diagram):
@@ -1368,9 +1494,10 @@ class SpreadsheetDocument(_UnoProxy):
         """
         Save document to a local file system.
 
-        Accept optional second  argument which defines type of saved file.
-        Use one of FILTER_* constants or see list of available filters at
-        http://wakka.net/archives/7
+        Accept optional second  argument which defines type of
+        the saved file. Use one of FILTER_* constants or see list of
+        available filters at http://wakka.net/archives/7 or
+        http://www.oooforum.org/forum/viewtopic.phtml?t=71294.
         """
         # UNO requires absolute paths
         url = uno.systemPathToFileUrl(os.path.abspath(path))

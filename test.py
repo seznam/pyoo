@@ -604,19 +604,89 @@ class ChartsTestCase(BaseTestCase):
             diagram.spline = True
             self.assertTrue(diagram.spline)
 
+    def test_x_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertTrue(diagram.x_axis.visible)
+            diagram.x_axis.visible = False
+            self.assertFalse(diagram.x_axis.visible)
+
+    def test_y_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertTrue(diagram.y_axis.visible)
+            diagram.y_axis.visible = False
+            self.assertFalse(diagram.y_axis.visible)
+
     def test_secondary_x_axis(self):
         with self.create_chart() as chart:
             diagram = chart.diagram
-            self.assertFalse(diagram.has_secondary_x_axis)
-            diagram.has_secondary_x_axis = True
-            self.assertTrue(diagram.has_secondary_x_axis)
+            self.assertFalse(diagram.secondary_x_axis.visible)
+            diagram.secondary_x_axis.visible = True
+            self.assertTrue(diagram.secondary_x_axis.visible)
 
     def test_secondary_y_axis(self):
         with self.create_chart() as chart:
             diagram = chart.diagram
-            self.assertFalse(diagram.has_secondary_y_axis)
-            diagram.has_secondary_y_axis = True
-            self.assertTrue(diagram.has_secondary_y_axis)
+            self.assertFalse(diagram.secondary_y_axis.visible)
+            diagram.secondary_y_axis.visible = True
+            self.assertTrue(diagram.secondary_y_axis.visible)
+
+    def test_x_axis_title(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertEqual('', diagram.x_axis.title)
+            diagram.x_axis.title = 'My Title'
+            self.assertEqual('My Title', diagram.x_axis.title)
+
+    def test_y_axis_title(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertEqual('', diagram.y_axis.title)
+            diagram.y_axis.title = 'My Title'
+            self.assertEqual('My Title', diagram.y_axis.title)
+
+    def test_secondary_x_axis_title(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertEqual('', diagram.secondary_x_axis.title)
+            diagram.secondary_x_axis.title = 'My Title'
+            self.assertEqual('My Title', diagram.secondary_x_axis.title)
+
+    def test_secondary_y_axis_title(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertEqual('', diagram.secondary_y_axis.title)
+            diagram.secondary_y_axis.title = 'My Title'
+            self.assertEqual('My Title', diagram.secondary_y_axis.title)
+
+    def test_logarithmic_x_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.x_axis.logarithmic)
+            diagram.x_axis.logarithmic = True
+            self.assertTrue(diagram.x_axis.logarithmic)
+
+    def test_logarithmic_y_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.y_axis.logarithmic)
+            diagram.y_axis.logarithmic = True
+            self.assertTrue(diagram.y_axis.logarithmic)
+
+    def test_logarithmic_secondary_x_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.secondary_x_axis.logarithmic)
+            diagram.secondary_x_axis.logarithmic = True
+            self.assertTrue(diagram.secondary_x_axis.logarithmic)
+
+    def test_logarithmic_secondary_y_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.secondary_y_axis.logarithmic)
+            diagram.secondary_y_axis.logarithmic = True
+            self.assertTrue(diagram.secondary_y_axis.logarithmic)
 
     def test_series_too_large_index(self):
         with self.create_chart() as chart:
