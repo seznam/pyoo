@@ -1,7 +1,6 @@
 
 import contextlib
 import datetime
-import time
 import unittest2
 
 import pyoo
@@ -704,14 +703,16 @@ class ChartsTestCase(BaseTestCase):
         with self.create_chart() as chart:
             series = chart.diagram.series[0]
             series.line_color = 0xFF0000
-            time.sleep(0.1) # OpenOffice needs some time to apply the change
+            # It seems that setting line_color is somehow lazy but after
+            # doing some other operation (setting the cell value)
+            # the change is applied.
+            self.sheet[0,0].value = 1
             self.assertEqual(0xFF0000, series.line_color)
 
     def test_series_fill_color(self):
         with self.create_chart() as chart:
             series = chart.diagram.series[0]
             series.fill_color = 0xFF0000
-            time.sleep(0.1) # OpenOffice needs some time to apply the change
             self.assertEqual(0xFF0000, series.fill_color)
 
 
