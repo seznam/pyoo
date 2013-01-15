@@ -10,7 +10,7 @@ Vcs-Git: git+ssh://git-generic@cml.kancelar.seznam.cz/szn-python-pyoo
 Package: szn-python-pyoo
 Architecture: all
 Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python-uno
-Description: Pythonic interface to OpenOffice.org API known as UNO.
+Description: Pythonic interface to OpenOffice.org API (UNO)
  PyOO allows to control a running OpenOffice.org_ program and
  use it for reading and writing spreadsheet documents.
  The library can be used for creation of miscellaneous exports
