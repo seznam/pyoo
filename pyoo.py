@@ -595,6 +595,45 @@ class BarDiagram(Diagram):
 
     _type = 'com.sun.star.chart.BarDiagram'
 
+    def __get_is_horizontal(self):
+        """
+        Gets whether this diagram is rendered with horizontal bars.
+
+        If value is False then you get vertical columns.
+        """
+        # Be aware - this call is translated to UNO "Vertical" property.
+        #
+        # UNO API claims that if vertical is false then we get a column chart
+        # rather than a bar chart -- which describes OpenOffice behavior.
+        #
+        # But the words "horizontal" and "vertical" simply mean opposite
+        # of the UNO semantics. If you don't believe me then try to google
+        # for "horizontal bar chart" and "vertical bar chart" images.
+        return self._target.getPropertyValue('Vertical')
+    def __set_is_horizontal(self, value):
+        """
+        Sets whether this diagram is rendered with horizontal bars.
+        """
+        return self._target.setPropertyValue('Vertical', value)
+    is_horizontal = property(__get_is_horizontal, __set_is_horizontal)
+
+    def __get_is_grouped(self):
+        """
+        Gets whether to group columns attached to different axis.
+
+        If bars of a bar or column chart are attached to different axis,
+        this property determines how to display those. If true, the bars
+        are grouped together in one block for each axis, thus they are
+        painted one group over the other.
+        """
+        return self._target.getPropertyValue('GroupBarsPerAxis')
+    def __set_is_grouped(self, value):
+        """
+        Sets whether to group columns attached to different axis.
+        """
+        return self._target.setPropertyValue('GroupBarsPerAxis', value)
+    is_grouped = property(__get_is_grouped, __set_is_grouped)
+
 
 class LineDiagram(Diagram):
     """

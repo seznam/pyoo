@@ -596,6 +596,21 @@ class ChartsTestCase(BaseTestCase):
             diagram.is_stacked = True
             self.assertTrue(diagram.is_stacked)
 
+    def test_vertical_bar_chart(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.is_horizontal)
+            diagram.is_horizontal = True
+            self.assertTrue(diagram.is_horizontal)
+
+    def test_grouped_bar_chart(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            diagram.is_grouped = False
+            self.assertFalse(diagram.is_grouped)
+            diagram.is_grouped = True
+            self.assertTrue(diagram.is_grouped)
+
     def test_diagram_spline(self):
         with self.create_chart() as chart:
             diagram = chart.change_type(pyoo.LineDiagram)
