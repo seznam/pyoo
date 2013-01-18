@@ -595,6 +595,18 @@ class BarDiagram(Diagram):
 
     _type = 'com.sun.star.chart.BarDiagram'
 
+    def __get_lines(self):
+        """
+        Gets count of series which are rendered as lines instead of lines.
+        """
+        return self._target.getPropertyValue('NumberOfLines')
+    def __set_lines(self, value):
+        """
+        Sets count of series which are rendered as lines instead of lines
+        """
+        return self._target.setPropertyValue('NumberOfLines', value)
+    lines = property(__get_lines, __set_lines)
+
     def __get_is_horizontal(self):
         """
         Gets whether this diagram is rendered with horizontal bars.

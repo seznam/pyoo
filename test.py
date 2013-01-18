@@ -603,6 +603,13 @@ class ChartsTestCase(BaseTestCase):
             diagram.is_horizontal = True
             self.assertTrue(diagram.is_horizontal)
 
+    def test_bar_chart_with_lines(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertEqual(0, diagram.lines)
+            diagram.lines = 1
+            self.assertEqual(1, diagram.lines)
+
     def test_grouped_bar_chart(self):
         with self.create_chart() as chart:
             diagram = chart.diagram
