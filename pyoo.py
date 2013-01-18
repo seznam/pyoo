@@ -418,20 +418,6 @@ class Axis(_UnoProxy):
         return self._target.setPropertyValue(self._has_axis_property, value)
     visible = property(__get_visible, __set_visible)
 
-    def __get_logarithmic(self):
-        """
-        Gets whether this axis has an logarithmic scale.
-        """
-        target = self._get_axis_target()
-        return target.getPropertyValue('Logarithmic')
-    def __set_logarithmic(self, value):
-        """
-        Sets whether this axis has an logarithmic scale.
-        """
-        target = self._get_axis_target()
-        target.setPropertyValue('Logarithmic', value)
-    logarithmic = property(__get_logarithmic, __set_logarithmic)
-
     def __get_title(self):
         """
         Gets title of this axis.
@@ -450,6 +436,35 @@ class Axis(_UnoProxy):
         target = self._get_title_target()
         target.setPropertyValue('String', value)
     title = property(__get_title, __set_title)
+
+    def __get_logarithmic(self):
+        """
+        Gets whether this axis has an logarithmic scale.
+        """
+        target = self._get_axis_target()
+        return target.getPropertyValue('Logarithmic')
+    def __set_logarithmic(self, value):
+        """
+        Sets whether this axis has an logarithmic scale.
+        """
+        target = self._get_axis_target()
+        target.setPropertyValue('Logarithmic', value)
+    logarithmic = property(__get_logarithmic, __set_logarithmic)
+
+    def __get_reversed(self):
+        """
+        Gets whether this axis is reversed
+        """
+        target = self._get_axis_target()
+        return target.getPropertyValue('ReverseDirection')
+    def __set_reversed(self, value):
+        """
+        Sets whether this axis is reversed
+        """
+        target = self._get_axis_target()
+        return target.setPropertyValue('ReverseDirection', value)
+    reversed = property(__get_reversed, __set_reversed)
+
 
     # The _target property of this class does not hold the axis itself but
     # the owner diagram instance. So following methods and properties has

@@ -681,6 +681,34 @@ class ChartsTestCase(BaseTestCase):
             diagram.secondary_y_axis.title = 'My Title'
             self.assertEqual('My Title', diagram.secondary_y_axis.title)
 
+    def test_reversed_x_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.x_axis.reversed)
+            diagram.x_axis.reversed = True
+            self.assertTrue(diagram.x_axis.reversed)
+
+    def test_reversed_y_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.y_axis.reversed)
+            diagram.y_axis.reversed = True
+            self.assertTrue(diagram.y_axis.reversed)
+
+    def test_reversed_secondary_x_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.secondary_x_axis.reversed)
+            diagram.secondary_x_axis.reversed = True
+            self.assertTrue(diagram.secondary_x_axis.reversed)
+
+    def test_reversed_secondary_y_axis(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertFalse(diagram.secondary_y_axis.reversed)
+            diagram.secondary_y_axis.reversed = True
+            self.assertTrue(diagram.secondary_y_axis.reversed)
+
     def test_logarithmic_x_axis(self):
         with self.create_chart() as chart:
             diagram = chart.diagram
