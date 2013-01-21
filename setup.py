@@ -3,7 +3,7 @@ from distutils.core import setup
 
 setup(
     name='pyoo',
-    version='0.1',
+    version='0.2',
     description='Pythonic interface to OpenOffice.org API (UNO)',
     long_description = open('README.rst').read(),
     author='Miloslav Pojman',
