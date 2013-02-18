@@ -87,6 +87,10 @@ def _clean_slice(key, length):
     Traceback (most recent call last):
     ...
     NotImplementedError: Cell slice with step is not supported.
+    >>> _clean_slice(slice(5, 5), 10)
+    Traceback (most recent call last):
+    ...
+    ValueError: Cell slice can not be empty.
     """
     if key.step is not None:
         raise NotImplementedError('Cell slice with step is not supported.')
@@ -103,7 +107,10 @@ def _clean_slice(key, length):
         start = start + length
     if stop < 0:
         stop = stop + length
-    return max(0, start), min(length, stop)
+    start, stop = max(0, start), min(length, stop)
+    if start == stop:
+        raise ValueError('Cell slice can not be empty.')
+    return start, stop
 
 
 def _clean_index(key, length):
