@@ -752,12 +752,11 @@ class ChartsTestCase(BaseTestCase):
     def test_series_line_color(self):
         with self.create_chart() as chart:
             series = chart.diagram.series[0]
+            self.assertEqual(0x000000, series.line_color)
             series.line_color = 0xFF0000
-            # It seems that setting line_color is somehow lazy but after
-            # doing some other operation (setting the cell value)
-            # the change is applied.
-            self.sheet[0,0].value = 1
-            self.assertEqual(0xFF0000, series.line_color)
+            self.assertEqual(0xFF0000, series.line_color,
+                "Setting line color of diagram series is sometimes ignored"
+                " so this test sometimes fails.")
 
     def test_series_fill_color(self):
         with self.create_chart() as chart:

@@ -358,6 +358,8 @@ class DiagramSeries(_UnoProxy):
     def __set_line_color(self, value):
         """
         Sets line color.
+
+        Be aware that this call is sometimes ignored by OpenOffice.
         """
         self._target.setPropertyValue('LineColor', value)
     line_color = property(__get_line_color, __set_line_color)
