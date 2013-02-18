@@ -195,8 +195,8 @@ class SheetPosition(object):
 
     def __unicode__(self):
         if self.width == self.height == 0:
-            return 'x=%d, y=%d' % (self.x, self.y)
-        return 'x=%d, y=%d, width=%d, height=%d' % (self.x, self.y,
+            return u'x=%d, y=%d' % (self.x, self.y)
+        return u'x=%d, y=%d, width=%d, height=%d' % (self.x, self.y,
                                                     self.width, self.height)
 
     def __str__(self):
@@ -204,6 +204,13 @@ class SheetPosition(object):
 
     def __repr__(self):
         return '<%s: %r>' % (self.__class__.__name__, str(self))
+
+    def replace(self, x=None, y=None, width=None, height=None):
+        x = x if x is not None else self.x
+        y = y if y is not None else self.y
+        width = width if width is not None else self.width
+        height = height if height is not None else self.height
+        return self.__class__(x, y, width, height)
 
     @classmethod
     def _from_uno(cls, position, size):
@@ -240,11 +247,7 @@ class SheetAddress(object):
         self.row_count, self.col_count = row_count, col_count
 
     def __unicode__(self):
-        start = u'$%s$%s' % (_col_name(self.col), _row_name(self.row))
-        if self.row_count == self.col_count == 1:
-            return start
-        end = u'$%s$%s' % (_col_name(self.col_end), _row_name(self.row_end))
-        return u'%s:%s' % (start, end)
+        return self.formula(row_abs=True, col_abs=True)
 
     def __str__(self):
         return unicode(self).encode('utf-8')
@@ -259,6 +262,34 @@ class SheetAddress(object):
     @property
     def col_end(self):
         return self.col + self.col_count - 1
+
+    def formula(self, row_abs=False, col_abs=False):
+        """
+        Returns this address as a string to be used in formulas.
+        """
+        if row_abs and col_abs:
+            fmt = u'$%s$%s'
+        elif row_abs:
+            fmt = u'%s$%s'
+        elif col_abs:
+            fmt = u'$%s%s'
+        else:
+            fmt = u'%s%s'
+        start = fmt % (_col_name(self.col), _row_name(self.row))
+        if self.row_count == self.col_count == 1:
+            return start
+        end = fmt % (_col_name(self.col_end), _row_name(self.row_end))
+        return '%s:%s' % (start, end)
+
+    def replace(self, row=None, col=None, row_count=None, col_count=None):
+        """
+        Returns a new address which the specified fields replaced.
+        """
+        row = row if row is not None else self.row
+        col = col if col is not None else self.col
+        row_count = row_count if row_count is not None else self.row_count
+        col_count = col_count if col_count is not None else self.col_count
+        return self.__class__(row, col, row_count, col_count)
 
     @classmethod
     def _from_uno(cls, target):

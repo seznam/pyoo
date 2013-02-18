@@ -14,7 +14,121 @@ def setUpModule():
     desktop = pyoo.Desktop()
 
 
-class BaseTestCase(unittest2.TestCase):
+class SheetPositionTestCase(unittest2.TestCase):
+
+    def test_point_str(self):
+        position = pyoo.SheetPosition(10, 20)
+        self.assertEqual('x=10, y=20', str(position))
+        self.assertIsInstance(str(position), str)
+
+    def test_point_unicode(self):
+        position = pyoo.SheetPosition(10, 20)
+        self.assertEqual(u'x=10, y=20', unicode(position))
+        self.assertIsInstance(unicode(position), unicode)
+
+    def test_rectange_str(self):
+        position = pyoo.SheetPosition(10, 20, 30, 40)
+        self.assertEqual('x=10, y=20, width=30, height=40', str(position))
+        self.assertIsInstance(str(position), str)
+
+    def test_rectange_unicode(self):
+        position = pyoo.SheetPosition(10, 20, 30, 40)
+        self.assertEqual(u'x=10, y=20, width=30, height=40', unicode(position))
+        self.assertIsInstance(unicode(position), unicode)
+
+    def test_replace_x(self):
+        position = pyoo.SheetPosition(10, 20, 30, 40)
+        self.assertEqual('x=100, y=20, width=30, height=40', str(position.replace(x=100)))
+
+    def test_replace_y(self):
+        position = pyoo.SheetPosition(10, 20, 30, 40)
+        self.assertEqual('x=10, y=200, width=30, height=40', str(position.replace(y=200)))
+
+    def test_replace_width(self):
+        position = pyoo.SheetPosition(10, 20, 30, 40)
+        self.assertEqual('x=10, y=20, width=300, height=40', str(position.replace(width=300)))
+
+    def test_replace_height(self):
+        position = pyoo.SheetPosition(10, 20, 30, 40)
+        self.assertEqual('x=10, y=20, width=30, height=400', str(position.replace(height=400)))
+
+
+class SheetAddressTestCase(unittest2.TestCase):
+
+    def test_cell_str(self):
+        address = pyoo.SheetAddress(0, 1)
+        self.assertEqual('$B$1', str(address))
+        self.assertIsInstance(str(address), str)
+
+    def test_cell_unicode(self):
+        address = pyoo.SheetAddress(0, 1)
+        self.assertEqual(u'$B$1', unicode(address))
+        self.assertIsInstance(unicode(address), unicode)
+
+    def test_range_str(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$B$1:$D$2', str(address))
+        self.assertIsInstance(str(address), str)
+
+    def test_range_unicode(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$B$1:$D$2', unicode(address))
+        self.assertIsInstance(unicode(address), unicode)
+
+    def test_cell_formula(self):
+        address = pyoo.SheetAddress(0, 1)
+        self.assertEqual('B1', address.formula())
+
+    def test_cell_formula_row_abs(self):
+        address = pyoo.SheetAddress(0, 1)
+        self.assertEqual('B$1', address.formula(row_abs=True))
+
+    def test_cell_formula_col_abs(self):
+        address = pyoo.SheetAddress(0, 1)
+        self.assertEqual('$B1', address.formula(col_abs=True))
+
+    def test_cell_formula_row_and_col_abs(self):
+        address = pyoo.SheetAddress(0, 1)
+        self.assertEqual('$B$1', address.formula(row_abs=True, col_abs=True))
+
+    def test_range_formula(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('B1:D2', address.formula())
+
+    def test_range_formula_row_abs(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('B$1:D$2', address.formula(row_abs=True))
+
+    def test_range_formula_col_abs(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$B1:$D2', address.formula(col_abs=True))
+
+    def test_range_formula_row_and_col_abs(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$B$1:$D$2', address.formula(row_abs=True, col_abs=True))
+
+    def test_replace_row(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$B$2:$D$3', str(address.replace(row=1)))
+
+    def test_replace_col(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$C$1:$E$2', str(address.replace(col=2)))
+
+    def test_replace_row_count(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$B$1:$D$1', str(address.replace(row_count=1)))
+
+    def test_replace_col_count(self):
+        address = pyoo.SheetAddress(0, 1, 2, 3)
+        self.assertEqual('$B$1:$B$2', str(address.replace(col_count=1)))
+
+
+
+class BaseDocumentTestCase(unittest2.TestCase):
+    """
+    Base class for test cases which require spreadsheet document.
+    """
 
     @classmethod
     def setUpClass(cls):
@@ -25,7 +139,7 @@ class BaseTestCase(unittest2.TestCase):
         cls.document.close()
 
 
-class CellRangeTestCase(BaseTestCase):
+class CellRangeTestCase(BaseDocumentTestCase):
 
     def setUp(self):
         self.sheet = self.document.sheets[0]
@@ -521,7 +635,7 @@ class CellRangeTestCase(BaseTestCase):
         self.assertEqual(fmt, self.sheet[0,0].number_format)
 
 
-class ChartsTestCase(BaseTestCase):
+class ChartsTestCase(BaseDocumentTestCase):
 
     _chart_index = 0
 
@@ -765,7 +879,7 @@ class ChartsTestCase(BaseTestCase):
             self.assertEqual(0xFF0000, series.fill_color)
 
 
-class SpreadsheetCollectionTestCase(BaseTestCase):
+class SpreadsheetCollectionTestCase(BaseDocumentTestCase):
 
     def test_get_sheet_by_invalid_type(self):
         with self.assertRaises(TypeError):
