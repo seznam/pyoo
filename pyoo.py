@@ -1,8 +1,9 @@
 
-import os
-import itertools
 import datetime
+import functools
+import itertools
 import numbers
+import os
 
 import uno
 
@@ -1102,6 +1103,31 @@ class CellRange(object):
         lines = (line, line, line, line)
         target.setPropertyValues(keys, lines)
     border_width = property(__get_border_width, __set_border_width)
+
+    def __get_one_border_width(self, key):
+        """
+        Gets width of one border.
+        """
+        target = self._get_target()
+        line = target.getPropertyValue(key)
+        return line.OuterLineWidth
+    def __set_one_border_width(self, value, key):
+        """
+        Sets width of one border.
+        """
+        target = self._get_target()
+        line = uno.createUnoStruct('com.sun.star.table.BorderLine2')
+        line.OuterLineWidth = value
+        target.setPropertyValue(key, line)
+
+    border_left_width = property(functools.partial(__get_one_border_width, key='LeftBorder'),
+                                 functools.partial(__set_one_border_width, key='LeftBorder'))
+    border_right_width = property(functools.partial(__get_one_border_width, key='RightBorder'),
+                                  functools.partial(__set_one_border_width, key='RightBorder'))
+    border_top_width = property(functools.partial(__get_one_border_width, key='TopBorder'),
+                                functools.partial(__set_one_border_width, key='TopBorder'))
+    border_bottom_width = property(functools.partial(__get_one_border_width, key='BottomBorder'),
+                                   functools.partial(__set_one_border_width, key='BottomBorder'))
 
     def __get_inner_border_width(self):
         """

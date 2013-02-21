@@ -602,6 +602,31 @@ class CellRangeTestCase(BaseDocumentTestCase):
         self.assertEqual(0, cells.border_width)
         self.assertEqual(0, cells[0,0].border_width)
 
+    def test_border_left_width(self):
+        cells = self.sheet[20:30,20:30]
+        cells.border_left_width = 100
+        # Border widths are approximate
+        self.assertAlmostEqual(100, cells.border_left_width, delta=10)
+
+    def test_border_right_width(self):
+        cells = self.sheet[20:30,20:30]
+        cells.border_right_width = 100
+        # Border widths are approximate
+        self.assertAlmostEqual(100, cells.border_right_width, delta=10)
+
+    def test_border_top_width(self):
+        cells = self.sheet[20:30,20:30]
+        cells.border_top_width = 100
+        # Border widths are approximate
+        self.assertAlmostEqual(100, cells.border_top_width, delta=10)
+
+    def test_border_bottom_width(self):
+        cells = self.sheet[20:30,20:30]
+        cells.border_bottom_width = 100
+        # Border widths are approximate
+        self.assertAlmostEqual(100, cells.border_bottom_width, delta=10)
+
+
     # Test number formats:
 
     def test_int_format(self):
