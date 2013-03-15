@@ -64,10 +64,7 @@ _NoConnectException = uno.getClass('com.sun.star.connection.NoConnectException')
 _ConnectionSetupException = uno.getClass('com.sun.star.connection.ConnectionSetupException')
 
 
-class ConnectionError(Exception):
-    """
-    Unable to connect to UNO API.
-    """
+UnoException = uno.getClass('com.sun.star.uno.Exception')
 
 
 def _clean_slice(key, length):
@@ -1761,10 +1758,7 @@ class Desktop(_UnoProxy):
         url = _get_connection_url(hostname, port, pipe)
         local_context = uno.getComponentContext()
         resolver = local_context.getServiceManager().createInstanceWithContext('com.sun.star.bridge.UnoUrlResolver', local_context)
-        try:
-            remote_context = resolver.resolve(url)
-        except (_NoConnectException, _ConnectionSetupException), e:
-            raise ConnectionError(e.Message)
+        remote_context = resolver.resolve(url)
         desktop = remote_context.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", remote_context)
         super(Desktop, self).__init__(desktop)
 
