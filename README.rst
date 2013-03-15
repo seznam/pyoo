@@ -304,11 +304,11 @@ Clean temporary files:
 
 Tag released version: ::
 
-    $ git tag -a 'vX.Y' -m 'Tag vX.Y version'.
+    $ git tag -a 'vX.Y' -m 'Tag vX.Y version'
 
 Increment current version: ::
 
-  $ dch -r
+  $ dch -i
   $ vi setup.py
   $ git add debian/changelog setup.py
   $ git commit -m "Increment version number. Refs #439."
