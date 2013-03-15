@@ -1738,8 +1738,12 @@ class SpreadsheetDocument(_UnoProxy):
         return self.__null_date
 
 
-def _get_connection_url(hostname, port):
-    return 'uno:socket,host=%s,port=%d;urp;StarOffice.ComponentContext' % (hostname, port)
+def _get_connection_url(hostname, port, pipe=None):
+    if pipe:
+        conn = 'pipe,name=%s' % pipe
+    else:
+        conn = 'socket,host=%s,port=%d' % (hostname, port)
+    return 'uno:%s;urp;StarOffice.ComponentContext' % conn
 
 
 class Desktop(_UnoProxy):
@@ -1753,8 +1757,8 @@ class Desktop(_UnoProxy):
     then the connection is lost all subsequent method calls will fail.
     """
 
-    def __init__(self, hostname='localhost', port=2002):
-        url = _get_connection_url(hostname, port)
+    def __init__(self, hostname='localhost', port=2002, pipe=None):
+        url = _get_connection_url(hostname, port, pipe)
         local_context = uno.getComponentContext()
         resolver = local_context.getServiceManager().createInstanceWithContext('com.sun.star.bridge.UnoUrlResolver', local_context)
         try:
@@ -1807,15 +1811,16 @@ class LazyDesktop(object):
 
     cls = Desktop
 
-    def __init__(self, hostname='localhost', port=2002):
+    def __init__(self, hostname='localhost', port=2002, pipe=None):
         self.hostname = hostname
         self.port = port
+        self.pipe = pipe
 
     def create_spreadsheet(self):
         """
         Creates a new spreadsheet document.
         """
-        desktop = self.cls(self.hostname, self.port)
+        desktop = self.cls(self.hostname, self.port, self.pipe)
         return desktop.create_spreadsheet()
 
     def open_spreadsheet(self, path, as_template=False):
