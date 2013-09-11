@@ -1178,7 +1178,7 @@ class CellRange(object):
             return self.sheet.document.date_to_number(value)
         if isinstance(value, datetime.time):
             return self.sheet.document.time_to_number(value)
-        raise ValueError(value)
+        return unicode(value)
 
     def _clean_formula(self, value):
         """
@@ -1194,7 +1194,7 @@ class CellRange(object):
             return self.sheet.document.date_to_number(value)
         if isinstance(value, datetime.time):
             return self.sheet.document.time_to_number(value)
-        raise ValueError(value)
+        return unicode(value)
 
 
 class Cell(CellRange):

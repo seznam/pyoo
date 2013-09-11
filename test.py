@@ -387,11 +387,6 @@ class CellRangeTestCase(BaseDocumentTestCase):
 
     # Test different cell types
 
-    def test_invalid_cell_value(self):
-        cell = self.sheet[0, 0]
-        with self.assertRaises(ValueError):
-            cell.value = object()
-
     def test_empty_cell_value(self):
         cell = self.sheet[0, 0]
         cell.value = None
@@ -432,10 +427,13 @@ class CellRangeTestCase(BaseDocumentTestCase):
         # Should be almost equal because dates and times are represented as floats
         self.assertEqual(datetime.time(23, 55, 01), cell.time.replace(microsecond=0))
 
-    def test_invalid_cell_formula(self):
+    def test_object_cell_value(self):
+        class MyObject(object):
+            def __unicode__(self):
+                return u"my unicode"
         cell = self.sheet[0, 0]
-        with self.assertRaises(ValueError):
-            cell.formula = object()
+        cell.value = MyObject()
+        self.assertEqual(u"my unicode", cell.value)
 
     def test_empty_cell_formula(self):
         cell = self.sheet[0, 0]
@@ -460,6 +458,15 @@ class CellRangeTestCase(BaseDocumentTestCase):
         cell.formula = '=1'
         self.assertEqual(1, cell.value)
         self.assertEqual('=1', cell.formula)
+
+    def test_object_cell_formula(self):
+        class MyObject(object):
+            def __unicode__(self):
+                return u"my unicode"
+        cell = self.sheet[0, 0]
+        cell.formula = MyObject()
+        self.assertEqual(u"my unicode", cell.value)
+        self.assertEqual(u"my unicode", cell.formula)
 
     def test_datetime_cell_formula(self):
         cell = self.sheet[0, 0]
