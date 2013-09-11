@@ -14,6 +14,11 @@ def setUpModule():
     desktop = pyoo.Desktop()
 
 
+class MyObject(object):
+    def __unicode__(self):
+        return u'my object'
+
+
 class SheetPositionTestCase(unittest2.TestCase):
 
     def test_point_str(self):
@@ -428,12 +433,9 @@ class CellRangeTestCase(BaseDocumentTestCase):
         self.assertEqual(datetime.time(23, 55, 01), cell.time.replace(microsecond=0))
 
     def test_object_cell_value(self):
-        class MyObject(object):
-            def __unicode__(self):
-                return u"my unicode"
         cell = self.sheet[0, 0]
         cell.value = MyObject()
-        self.assertEqual(u"my unicode", cell.value)
+        self.assertEqual(u'my object', cell.value)
 
     def test_empty_cell_formula(self):
         cell = self.sheet[0, 0]
@@ -460,13 +462,10 @@ class CellRangeTestCase(BaseDocumentTestCase):
         self.assertEqual('=1', cell.formula)
 
     def test_object_cell_formula(self):
-        class MyObject(object):
-            def __unicode__(self):
-                return u"my unicode"
         cell = self.sheet[0, 0]
         cell.formula = MyObject()
-        self.assertEqual(u"my unicode", cell.value)
-        self.assertEqual(u"my unicode", cell.formula)
+        self.assertEqual(u'my object', cell.value)
+        self.assertEqual(u'my object', cell.formula)
 
     def test_datetime_cell_formula(self):
         cell = self.sheet[0, 0]
@@ -806,12 +805,26 @@ class ChartsTestCase(BaseDocumentTestCase):
             diagram.x_axis.title = 'My Title'
             self.assertEqual('My Title', diagram.x_axis.title)
 
+    def test_x_axis_title_given_as_object(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertEqual('', diagram.x_axis.title)
+            diagram.x_axis.title = MyObject()
+            self.assertEqual(u'my object', diagram.x_axis.title)
+
     def test_y_axis_title(self):
         with self.create_chart() as chart:
             diagram = chart.diagram
             self.assertEqual('', diagram.y_axis.title)
             diagram.y_axis.title = 'My Title'
             self.assertEqual('My Title', diagram.y_axis.title)
+
+    def test_y_axis_title_given_as_object(self):
+        with self.create_chart() as chart:
+            diagram = chart.diagram
+            self.assertEqual('', diagram.y_axis.title)
+            diagram.y_axis.title = MyObject()
+            self.assertEqual('my object', diagram.y_axis.title)
 
     def test_secondary_x_axis_title(self):
         with self.create_chart() as chart:

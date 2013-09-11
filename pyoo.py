@@ -472,7 +472,7 @@ class Axis(_UnoProxy):
         # `target.XAxis.String` is set to non empty value.)
         self._target.setPropertyValue(self._has_axis_title_property, True)
         target = self._get_title_target()
-        target.setPropertyValue('String', value)
+        target.setPropertyValue('String', unicode(value))
     title = property(__get_title, __set_title)
 
     def __get_logarithmic(self):
