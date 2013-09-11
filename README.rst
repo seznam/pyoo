@@ -62,7 +62,7 @@ or ``0.0.0.0``. Because of the other options no user interface should be
 displayed until first document is opened. If the `-headless` option is
 used then no user interface is visible even when a document is opened.
 
-On Ubunut use following command: ::
+On Ubuntu use following command: ::
 
     $ soffice --accept="socket,host=localhost,port=2002;urp;" --norestore --nologo --nodefault # --headless
 
