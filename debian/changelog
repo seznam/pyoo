@@ -1,8 +1,8 @@
 szn-python-pyoo (0.3) unstable; urgency=low
 
-  * Not yet released! 
+  * Support for lazy (translated) strings.
 
- -- Miloslav Pojman <miloslav.pojman@firma.seznam.cz>  Fri, 15 Mar 2013 18:09:35 +0100
+ -- Miloslav Pojman <miloslav.pojman@firma.seznam.cz>  Tue, 29 Oct 2013 15:08:30 +0100
 
 szn-python-pyoo (0.2) unstable; urgency=low
 
