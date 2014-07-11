@@ -1,3 +1,9 @@
+"""
+PyOO - Pythonic interface to Apache OpenOffice API (UNO)
+
+Copyright (c) 2014 Seznam.cz, a.s.
+
+"""
 
 import contextlib
 import datetime

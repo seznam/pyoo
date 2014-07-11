@@ -290,3 +290,10 @@ it is listening on localhost port 2002.
 All tests are in the ``test.py`` file: ::
 
     $ python test.py
+
+
+License
+-------
+
+This library is released under the MIT license. Seet the ``LICENSE`` file.
+Copyright (c) 2014 Seznam.cz, a.s.
