@@ -7,7 +7,7 @@ Copyright (c) 2014 Seznam.cz, a.s.
 
 import contextlib
 import datetime
-import unittest2
+import unittest
 
 import pyoo
 
@@ -25,7 +25,7 @@ class MyObject(object):
         return u'my object'
 
 
-class SheetPositionTestCase(unittest2.TestCase):
+class SheetPositionTestCase(unittest.TestCase):
 
     def test_point_str(self):
         position = pyoo.SheetPosition(10, 20)
@@ -64,7 +64,7 @@ class SheetPositionTestCase(unittest2.TestCase):
         self.assertEqual('x=10, y=20, width=30, height=400', str(position.replace(height=400)))
 
 
-class SheetAddressTestCase(unittest2.TestCase):
+class SheetAddressTestCase(unittest.TestCase):
 
     def test_cell_str(self):
         address = pyoo.SheetAddress(0, 1)
@@ -136,7 +136,7 @@ class SheetAddressTestCase(unittest2.TestCase):
 
 
 
-class BaseDocumentTestCase(unittest2.TestCase):
+class BaseDocumentTestCase(unittest.TestCase):
     """
     Base class for test cases which require spreadsheet document.
     """
@@ -1014,4 +1014,4 @@ class SpreadsheetCollectionTestCase(BaseDocumentTestCase):
 
 
 if __name__ == '__main__':
-    unittest2.main()
+    unittest.main()
