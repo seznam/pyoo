@@ -13,7 +13,6 @@ import itertools
 import numbers
 import os
 import sys
-import types
 
 import uno
 
@@ -96,8 +95,9 @@ def str_repr(klass):
     """
     Implements string conversion methods for the given class.
 
-    The given class must implement the `__str__` method. This decorat
-    will add `__repr__` and `__unicode__` (for Python 2).
+    The given class must implement the __str__ method. This decorat
+    will add __repr__ and __unicode__ (for Python 2).
+
     """
     if PY2:
         klass.__unicode__ = klass.__str__
@@ -108,7 +108,7 @@ def str_repr(klass):
 
 def _clean_slice(key, length):
     """
-    Validates and normalizes cell range slice.
+    Validates and normalizes a cell range slice.
 
     >>> _clean_slice(slice(None, None), 10)
     (0, 10)
@@ -128,6 +128,7 @@ def _clean_slice(key, length):
     Traceback (most recent call last):
     ...
     ValueError: Cell slice can not be empty.
+
     """
     if key.step is not None:
         raise NotImplementedError('Cell slice with step is not supported.')
@@ -152,7 +153,7 @@ def _clean_slice(key, length):
 
 def _clean_index(key, length):
     """
-    Validates and normalizes cell range index
+    Validates and normalizes a cell range index.
 
     >>> _clean_index(0, 10)
     0
@@ -170,6 +171,7 @@ def _clean_index(key, length):
     Traceback (most recent call last):
     ...
     TypeError: Cell indices must be integers, NoneType given.
+
     """
     if not isinstance(key, integer_types):
         raise TypeError('Cell indices must be integers, %s given.' % type(key).__name__)
@@ -183,24 +185,26 @@ def _clean_index(key, length):
 
 def _row_name(index):
     """
-    Converts row index to row name.
+    Converts a row index to a row name.
 
     >>> _row_name(0)
     '1'
     >>> _row_name(10)
     '11'
+
     """
     return '%d' % (index + 1)
 
 
 def _col_name(index):
     """
-    Converts column index to column name.
+    Converts a column index to a column name.
 
     >>> _col_name(0)
     'A'
     >>> _col_name(26)
     'AA'
+
     """
     for exp in itertools.count(1):
         limit = 26 ** exp
@@ -215,7 +219,7 @@ class SheetPosition(object):
     Position of a rectangular are in a spreadsheet.
 
     This class represent physical position in 100/th mm,
-    see SheetAddress class for logical address of cells.
+    see SheetAddress class for a logical address of cells.
 
     >>> position = SheetPosition(1000, 2000)
     >>> print position
@@ -223,7 +227,10 @@ class SheetPosition(object):
     >>> position = SheetPosition(1000, 2000, 3000, 4000)
     >>> print position
     x=1000, y=2000, width=3000, height=4000
+
     """
+
+    __slots__ = ('x', 'y', 'width', 'height')
 
     def __init__(self, x, y, width=0, height=0):
         self.x = x
@@ -259,7 +266,7 @@ class SheetPosition(object):
 @str_repr
 class SheetAddress(object):
     """
-    Address of a a cell or rectangular range of cells in a spreadsheet.
+    Address of a cell or a rectangular range of cells in a spreadsheet.
 
     This class represent logical address of cells, see SheetPosition
     class for physical location.
@@ -270,6 +277,7 @@ class SheetAddress(object):
     >>> address = SheetAddress(1, 2, 3, 4)
     >>> print address
     $C$2:$F$4
+
     """
 
     __slots__ = ('row', 'col', 'row_count', 'col_count')
@@ -398,6 +406,7 @@ class DiagramSeries(_UnoProxy):
     This class allows to control how one sequence of values (typically
     one table column) is displayed in a chart (for example appearance
     of one line).
+
     """
 
     __slots__ = ()
@@ -474,8 +483,8 @@ class Axis(_UnoProxy):
         """
         Gets whether this axis is visible.
         """
-        # Getting `target.HasXAxis` is a lot of faster then accessing
-        # `target.XAxis.Visible` property.
+        # Getting target.HasXAxis is a lot of faster then accessing
+        # target.XAxis.Visible property.
         return self._target.getPropertyValue(self._has_axis_property)
     def __set_visible(self, value):
         """
@@ -494,10 +503,10 @@ class Axis(_UnoProxy):
         """
         Sets title of this axis.
         """
-        # OpenOffice on Debian "squeeze" ignore value of `target.XAxis.String`
-        # unless `target.HasXAxisTitle` is set to True first. (Despite the
-        # fact that `target.HasXAxisTitle` is reported to be False until
-        # `target.XAxis.String` is set to non empty value.)
+        # OpenOffice on Debian "squeeze" ignore value of target.XAxis.String
+        # unless target.HasXAxisTitle is set to True first. (Despite the
+        # fact that target.HasXAxisTitle is reported to be False until
+        # target.XAxis.String is set to non empty value.)
         self._target.setPropertyValue(self._has_axis_title_property, True)
         target = self._get_title_target()
         target.setPropertyValue('String', text_type(value))
@@ -609,6 +618,7 @@ class Diagram(_UnoProxy):
     Each chart has a diagram which specifies how data are rendered.
     The inner diagram can be changed or replaced while the
     the outer chart instance is still the same.
+
     """
 
     __slots__ = ()
@@ -838,7 +848,7 @@ class ChartCollection(NamedCollection):
 
     def create(self, name, position, ranges=(), col_header=False, row_header=False):
         """
-        Creates a and inserts a new chart.
+        Creates and inserts a new chart.
         """
         rect = self._uno_rect(position)
         ranges = self._uno_ranges(ranges)
@@ -882,6 +892,7 @@ class SheetCursor(_UnoProxy):
 
     Most of spreadsheet operations are done using this cursor
     because cursor movement is much faster then cell range selection.
+
     """
 
     __slots__ = ('row', 'col', 'row_count', 'col_count',
@@ -937,12 +948,14 @@ class SheetCursor(_UnoProxy):
             self.col = col
         return target
 
+
 @str_repr
 class CellRange(object):
     """
     Range of cells in one sheet.
 
     This is an abstract base class implements cell manipulation functionality.
+
     """
     # Does not extend _UnoProxy because it uses sheet cursor internally
     # instead of direct reference to UNO object.
@@ -1225,6 +1238,7 @@ class Cell(CellRange):
 
     Cells are returned when a sheet (or any other tabular cell range)
     is indexed by two integer numbers.
+
     """
 
     __slots__ = ()
@@ -1291,6 +1305,7 @@ class TabularCellRange(CellRange):
 
     Instances of this class are returned when a sheet (or any other tabular
     cell range) is sliced in both axes.
+
     """
 
     __slots__ = ()
@@ -1371,13 +1386,14 @@ class TabularCellRange(CellRange):
 
 class HorizontalCellRange(CellRange):
     """
-    Range of cell in one row.
+    Range of cells in one row.
 
     Individual cells can be accessed by integer index or subranges
     can be retrieved using slice notation.
 
     Instances of this class are returned if a sheet (or any other tabular
     cell range) is indexed by a row number but columns are sliced.
+
     """
 
     __slots__ = ()
@@ -1433,13 +1449,14 @@ class HorizontalCellRange(CellRange):
 
 class VerticalCellRange(CellRange):
     """
-    Range of cell in one column.
+    Range of cells in one column.
 
     Individual cells can be accessed by integer index or or subranges
     can be retrieved using slice notation.
 
     Instances of this class are returned if a sheet (or any other tabular
     cell range) is indexed by a column number but rows are sliced.
+
     """
 
     __slots__ = ()
@@ -1507,6 +1524,7 @@ class Sheet(TabularCellRange):
 
     Sheet instances can be accessed using sheets property
     of a SpreadsheetDocument class.
+
     """
 
     __slots__ = ('document', '_target', 'cursor')
@@ -1556,6 +1574,7 @@ class SpreadsheetCollection(NamedCollection):
 
     Instance of this class is returned via sheets property of
     the SpreadsheetDocument class.
+
     """
 
     __slots__ = ('document',)
@@ -1619,6 +1638,7 @@ class Locale(object):
 
     Provides locale number formats. Instances of this class can be
     retrieved from SpreadsheetDocument using get_locale method.
+
     """
 
     __slots__ = ('_locale', '_formats')
@@ -1644,7 +1664,7 @@ class SpreadsheetDocument(_UnoProxy):
 
     def save(self, path, filter_name=None):
         """
-        Save document to a local file system.
+        Saves this document to a local file system.
 
         Accept optional second  argument which defines type of
         the saved file. Use one of FILTER_* constants or see list of
@@ -1675,7 +1695,7 @@ class SpreadsheetDocument(_UnoProxy):
 
     def get_locale(self, language=None, country=None, variant=None):
         """
-        Returns location which can be used for access to number formats.
+        Returns locale which can be used for access to number formats.
         """
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/lang/Locale.html
         locale = uno.createUnoStruct('com.sun.star.lang.Locale')
@@ -1775,6 +1795,7 @@ class Desktop(_UnoProxy):
     Opens a connection to a running OpenOffice.org program when Desktop
     instance is initialized. If the program OpenOffice.org is restarted
     then the connection is lost all subsequent method calls will fail.
+
     """
 
     def __init__(self, hostname='localhost', port=2002, pipe=None):
@@ -1824,6 +1845,7 @@ class LazyDesktop(object):
     to OpenOffice program when necessary. The advantage of this approach
     is that a LazyDesktop instance can recover from a restart of
     the OpenOffice.org program.
+
     """
 
     cls = Desktop
