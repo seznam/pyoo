@@ -5,14 +5,18 @@ Copyright (c) 2014 Seznam.cz, a.s.
 
 """
 
+from __future__ import division
 
 import datetime
 import functools
 import itertools
 import numbers
 import os
+import sys
+import types
 
 import uno
+
 
 # Filters used when saving document.
 FILTER_PDF_EXPORT = 'writer_pdf_Export'
@@ -74,6 +78,34 @@ _ConnectionSetupException = uno.getClass('com.sun.star.connection.ConnectionSetu
 UnoException = uno.getClass('com.sun.star.uno.Exception')
 
 
+PY2 = sys.version_info[0] == 2
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    string_types = str,
+    integer_types = int,
+    text_type = str
+else:
+    string_types = basestring,
+    integer_types = (int, long)
+    text_type = unicode
+    range = xrange
+
+
+def str_repr(klass):
+    """
+    Implements string conversion methods for the given class.
+
+    The given class must implement the `__str__` method. This decorat
+    will add `__repr__` and `__unicode__` (for Python 2).
+    """
+    if PY2:
+        klass.__unicode__ = klass.__str__
+        klass.__str__ = lambda self: self.__unicode__().encode('utf-8')
+    klass.__repr__ = lambda self: '<%s: %r>' % (self.__class__.__name__, str(self))
+    return klass
+
+
 def _clean_slice(key, length):
     """
     Validates and normalizes cell range slice.
@@ -104,9 +136,9 @@ def _clean_slice(key, length):
         start = 0
     if stop is None:
         stop = length
-    if not isinstance(start, (int, long)):
+    if not isinstance(start, integer_types):
         raise TypeError('Cell indices must be integers, %s given.' % type(start).__name__)
-    if not isinstance(stop, (int, long)):
+    if not isinstance(stop, integer_types):
         raise TypeError('Cell indices must be integers, %s given.' % type(stop).__name__)
     if start < 0:
         start = start + length
@@ -139,7 +171,7 @@ def _clean_index(key, length):
     ...
     TypeError: Cell indices must be integers, NoneType given.
     """
-    if not isinstance(key, (int, long)):
+    if not isinstance(key, integer_types):
         raise TypeError('Cell indices must be integers, %s given.' % type(key).__name__)
     if -length <= key < 0:
         return key + length
@@ -173,10 +205,11 @@ def _col_name(index):
     for exp in itertools.count(1):
         limit = 26 ** exp
         if index < limit:
-            return ''.join(chr(ord('A') + index / (26 ** i) % 26) for i in xrange(exp-1, -1, -1))
+            return ''.join(chr(ord('A') + index // (26 ** i) % 26) for i in range(exp-1, -1, -1))
         index -= limit
 
 
+@str_repr
 class SheetPosition(object):
     """
     Position of a rectangular are in a spreadsheet.
@@ -198,17 +231,11 @@ class SheetPosition(object):
         self.width = width
         self.height = height
 
-    def __unicode__(self):
+    def __str__(self):
         if self.width == self.height == 0:
             return u'x=%d, y=%d' % (self.x, self.y)
         return u'x=%d, y=%d, width=%d, height=%d' % (self.x, self.y,
                                                     self.width, self.height)
-
-    def __str__(self):
-        return unicode(self).encode('utf-8')
-
-    def __repr__(self):
-        return '<%s: %r>' % (self.__class__.__name__, str(self))
 
     def replace(self, x=None, y=None, width=None, height=None):
         x = x if x is not None else self.x
@@ -229,7 +256,7 @@ class SheetPosition(object):
         struct.Height = self.height
         return struct
 
-
+@str_repr
 class SheetAddress(object):
     """
     Address of a a cell or rectangular range of cells in a spreadsheet.
@@ -251,14 +278,8 @@ class SheetAddress(object):
         self.row, self.col = row, col
         self.row_count, self.col_count = row_count, col_count
 
-    def __unicode__(self):
-        return self.formula(row_abs=True, col_abs=True)
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
-
-    def __repr__(self):
-        return '<%s: %r>' % (self.__class__.__name__, str(self))
+        return self.formula(row_abs=True, col_abs=True)
 
     @property
     def row_end(self):
@@ -341,10 +362,10 @@ class NamedCollection(_UnoProxy):
         return self._target.getCount()
 
     def __getitem__(self, key):
-        if isinstance(key, (int, long)):
+        if isinstance(key, integer_types):
             target = self._get_by_index(key)
             return self._factory(target)
-        if isinstance(key, basestring):
+        if isinstance(key, string_types):
             target = self._get_by_name(key)
             return self._factory(target)
         raise TypeError('%s must be accessed either by index or name.'
@@ -479,7 +500,7 @@ class Axis(_UnoProxy):
         # `target.XAxis.String` is set to non empty value.)
         self._target.setPropertyValue(self._has_axis_title_property, True)
         target = self._get_title_target()
-        target.setPropertyValue('String', unicode(value))
+        target.setPropertyValue('String', text_type(value))
     title = property(__get_title, __set_title)
 
     def __get_logarithmic(self):
@@ -811,7 +832,7 @@ class ChartCollection(NamedCollection):
         super(ChartCollection, self).__init__(target)
 
     def __delitem__(self, key):
-        if not isinstance(key, basestring):
+        if not isinstance(key, string_types):
             key = self[key].name
         self._delete(key)
 
@@ -916,7 +937,7 @@ class SheetCursor(_UnoProxy):
             self.col = col
         return target
 
-
+@str_repr
 class CellRange(object):
     """
     Range of cells in one sheet.
@@ -932,14 +953,8 @@ class CellRange(object):
         self.sheet = sheet
         self.address = address
 
-    def __unicode__(self):
-        return unicode(self.address)
-
     def __str__(self):
-        return unicode(self).encode('utf-8')
-
-    def __repr__(self):
-        return '<%s: %r>' % (self.__class__.__name__, str(self))
+        return text_type(self.address)
 
     @property
     def position(self):
@@ -1179,13 +1194,13 @@ class CellRange(object):
             return value
         if isinstance(value, numbers.Real):
             return value
-        if isinstance(value, basestring):
+        if isinstance(value, string_types):
             return value
         if isinstance(value, datetime.date):
             return self.sheet.document.date_to_number(value)
         if isinstance(value, datetime.time):
             return self.sheet.document.time_to_number(value)
-        return unicode(value)
+        return text_type(value)
 
     def _clean_formula(self, value):
         """
@@ -1195,13 +1210,13 @@ class CellRange(object):
             return ''
         if isinstance(value, numbers.Real):
             return value
-        if isinstance(value, basestring):
+        if isinstance(value, string_types):
             return value
         if isinstance(value, datetime.date):
             return self.sheet.document.date_to_number(value)
         if isinstance(value, datetime.time):
             return self.sheet.document.time_to_number(value)
-        return unicode(value)
+        return text_type(value)
 
 
 class Cell(CellRange):
@@ -1482,6 +1497,7 @@ class VerticalCellRange(CellRange):
     formulas = property(__get_formulas, __set_formulas)
 
 
+@str_repr
 class Sheet(TabularCellRange):
     """
     One sheet in a spreadsheet document.
@@ -1504,8 +1520,8 @@ class Sheet(TabularCellRange):
         address = SheetAddress(0, 0, self.cursor.row_count, self.cursor.col_count)
         super(Sheet, self).__init__(self, address)
 
-    def __unicode__(self):
-        return unicode(self.name)
+    def __str__(self):
+        return text_type(self.name)
 
     @property
     def index(self):
@@ -1549,7 +1565,7 @@ class SpreadsheetCollection(NamedCollection):
         super(SpreadsheetCollection, self).__init__(target)
 
     def __delitem__(self, key):
-        if not isinstance(key, basestring):
+        if not isinstance(key, string_types):
             key = self[key].name
         self._delete(key)
 
@@ -1647,7 +1663,7 @@ class SpreadsheetDocument(_UnoProxy):
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/frame/XStorable.html#storeToURL
         try:
             self._target.storeToURL(url, filters)
-        except _IOException, e:
+        except _IOException as e:
             raise IOError(e.Message)
 
     def close(self):
@@ -1796,7 +1812,7 @@ class Desktop(_UnoProxy):
         # http://www.openoffice.org/api/docs/common/ref/com/sun/star/frame/XComponentLoader.html#loadComponentFromURL
         try:
             return self._target.loadComponentFromURL(url, '_blank', 0, extra)
-        except _IOException, e:
+        except _IOException as e:
             raise IOError(e.Message)
 
 

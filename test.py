@@ -19,33 +19,35 @@ def setUpModule():
     global desktop
     desktop = pyoo.Desktop()
 
-
+@pyoo.str_repr
 class MyObject(object):
-    def __unicode__(self):
+    def __str__(self):
         return u'my object'
 
 
 class SheetPositionTestCase(unittest.TestCase):
 
-    def test_point_str(self):
+    if pyoo.PY2:
+        def test_point_str(self):
+            position = pyoo.SheetPosition(10, 20)
+            self.assertEqual(b'x=10, y=20', str(position))
+            self.assertIsInstance(str(position), str)
+
+    def test_point_text(self):
         position = pyoo.SheetPosition(10, 20)
-        self.assertEqual('x=10, y=20', str(position))
-        self.assertIsInstance(str(position), str)
+        self.assertEqual(u'x=10, y=20', pyoo.text_type(position))
+        self.assertIsInstance(pyoo.text_type(position), pyoo.text_type)
 
-    def test_point_unicode(self):
-        position = pyoo.SheetPosition(10, 20)
-        self.assertEqual(u'x=10, y=20', unicode(position))
-        self.assertIsInstance(unicode(position), unicode)
+    if pyoo.PY2:
+        def test_rectange_str(self):
+            position = pyoo.SheetPosition(10, 20, 30, 40)
+            self.assertEqual(b'x=10, y=20, width=30, height=40', str(position))
+            self.assertIsInstance(str(position), str)
 
-    def test_rectange_str(self):
+    def test_rectange_text(self):
         position = pyoo.SheetPosition(10, 20, 30, 40)
-        self.assertEqual('x=10, y=20, width=30, height=40', str(position))
-        self.assertIsInstance(str(position), str)
-
-    def test_rectange_unicode(self):
-        position = pyoo.SheetPosition(10, 20, 30, 40)
-        self.assertEqual(u'x=10, y=20, width=30, height=40', unicode(position))
-        self.assertIsInstance(unicode(position), unicode)
+        self.assertEqual(u'x=10, y=20, width=30, height=40', pyoo.text_type(position))
+        self.assertIsInstance(pyoo.text_type(position), pyoo.text_type)
 
     def test_replace_x(self):
         position = pyoo.SheetPosition(10, 20, 30, 40)
@@ -66,25 +68,27 @@ class SheetPositionTestCase(unittest.TestCase):
 
 class SheetAddressTestCase(unittest.TestCase):
 
-    def test_cell_str(self):
+    if pyoo.PY2:
+        def test_cell_str(self):
+            address = pyoo.SheetAddress(0, 1)
+            self.assertEqual(b'$B$1', str(address))
+            self.assertIsInstance(str(address), str)
+
+    def test_cell_text(self):
         address = pyoo.SheetAddress(0, 1)
-        self.assertEqual('$B$1', str(address))
-        self.assertIsInstance(str(address), str)
+        self.assertEqual(u'$B$1', pyoo.text_type(address))
+        self.assertIsInstance(pyoo.text_type(address), pyoo.text_type)
 
-    def test_cell_unicode(self):
-        address = pyoo.SheetAddress(0, 1)
-        self.assertEqual(u'$B$1', unicode(address))
-        self.assertIsInstance(unicode(address), unicode)
+    if pyoo.PY2:
+        def test_ranges_str(self):
+            address = pyoo.SheetAddress(0, 1, 2, 3)
+            self.assertEqual(b'$B$1:$D$2', str(address))
+            self.assertIsInstance(str(address), str)
 
-    def test_range_str(self):
+    def test_range_text(self):
         address = pyoo.SheetAddress(0, 1, 2, 3)
-        self.assertEqual('$B$1:$D$2', str(address))
-        self.assertIsInstance(str(address), str)
-
-    def test_range_unicode(self):
-        address = pyoo.SheetAddress(0, 1, 2, 3)
-        self.assertEqual('$B$1:$D$2', unicode(address))
-        self.assertIsInstance(unicode(address), unicode)
+        self.assertEqual('$B$1:$D$2', pyoo.text_type(address))
+        self.assertIsInstance(pyoo.text_type(address), pyoo.text_type)
 
     def test_cell_formula(self):
         address = pyoo.SheetAddress(0, 1)
@@ -157,15 +161,16 @@ class CellRangeTestCase(BaseDocumentTestCase):
 
     # Test conversion to string
 
-    def test_cell_unicode(self):
+    def test_cell_text(self):
         cell = self.sheet[0,0]
-        self.assertEqual(u'$A$1', unicode(cell))
-        self.assertEqual(u'$A$1', unicode(cell.address))
+        self.assertEqual(u'$A$1', pyoo.text_type(cell))
+        self.assertEqual(u'$A$1', pyoo.text_type(cell.address))
 
-    def test_cell_str(self):
-        cell = self.sheet[0,0]
-        self.assertEqual('$A$1', str(cell))
-        self.assertEqual('$A$1', str(cell.address))
+    if pyoo.PY2:
+        def test_cell_str(self):
+            cell = self.sheet[0,0]
+            self.assertEqual(b'$A$1', str(cell))
+            self.assertEqual(b'$A$1', str(cell.address))
 
     def test_cell_repr(self):
         cell = self.sheet[0,0]
@@ -434,9 +439,9 @@ class CellRangeTestCase(BaseDocumentTestCase):
 
     def test_time_cell_value(self):
         cell = self.sheet[0, 0]
-        cell.value = datetime.time(23, 55, 01)
+        cell.value = datetime.time(23, 55, 1)
         # Should be almost equal because dates and times are represented as floats
-        self.assertEqual(datetime.time(23, 55, 01), cell.time.replace(microsecond=0))
+        self.assertEqual(datetime.time(23, 55, 1), cell.time.replace(microsecond=0))
 
     def test_object_cell_value(self):
         cell = self.sheet[0, 0]
@@ -487,26 +492,26 @@ class CellRangeTestCase(BaseDocumentTestCase):
 
     def test_time_cell_formula(self):
         cell = self.sheet[0, 0]
-        cell.formula = datetime.time(23, 55, 01)
+        cell.formula = datetime.time(23, 55, 1)
         # Should be almost equal because dates and times are represented as floats
-        self.assertEqual(datetime.time(23, 55, 01), cell.time.replace(microsecond=0))
+        self.assertEqual(datetime.time(23, 55, 1), cell.time.replace(microsecond=0))
 
     # Test data access:
 
     def test_tabular_range_data(self):
-        data = [[i * j for j in xrange(5)] for i in xrange(10)]
+        data = [[i * j for j in range(5)] for i in range(10)]
         self.sheet[10:20,1:6].values = data
         self.assertEqual(36, self.sheet[19,5].value)
         self.assertEqual(36, self.sheet[10:20,1:6].values[-1][-1])
 
     def test_horizontal_range_data(self):
-        data = [i + 100 for i in xrange(5)]
+        data = [i + 100 for i in range(5)]
         self.sheet[10,1:6].values = data
         self.assertEqual(104, self.sheet[10,5].value)
         self.assertEqual(104, self.sheet[10,1:6].values[-1])
 
     def test_vertical_range_data(self):
-        data = [i + 200 for i in xrange(10)]
+        data = [i + 200 for i in range(10)]
         self.sheet[10:20,1].values = data
         self.assertEqual(209, self.sheet[19,1].value)
         self.assertEqual(209, self.sheet[10:20,1].values[-1])
@@ -516,19 +521,19 @@ class CellRangeTestCase(BaseDocumentTestCase):
         self.assertEqual(300, self.sheet[10,1].value)
 
     def test_tabular_range_formulas(self):
-        formulas = [['=%d*%d' % (i, j) for j in xrange(5)] for i in xrange(10)]
+        formulas = [['=%d*%d' % (i, j) for j in range(5)] for i in range(10)]
         self.sheet[10:20,1:6].formulas = formulas
         self.assertEqual('=9*4', self.sheet[19,5].formula)
         self.assertEqual('=9*4', self.sheet[10:20,1:6].formulas[-1][-1])
 
     def test_horizontal_range_formulas(self):
-        formulas = ['=%d+100' % i for i in xrange(5)]
+        formulas = ['=%d+100' % i for i in range(5)]
         self.sheet[10,1:6].formulas = formulas
         self.assertEqual('=4+100', self.sheet[10,5].formula)
         self.assertEqual('=4+100', self.sheet[10,1:6].formulas[-1])
 
     def test_vertical_range_formulas(self):
-        formulas = ['=%d+200' % i for i in xrange(10)]
+        formulas = ['=%d+200' % i for i in range(10)]
         self.sheet[10:20,1].formulas = formulas
         self.assertEqual('=9+200', self.sheet[19,1].formula)
         self.assertEqual('=9+200', self.sheet[10:20,1].formulas[-1])
@@ -704,12 +709,12 @@ class ChartsTestCase(BaseDocumentTestCase):
     def test_create_chart(self):
         with self.create_chart(name='Created chart') as chart:
             self.assertEqual('Created chart', chart.name)
-            self.assertEqual(['$A$1:$C$2'], map(str, chart.ranges))
+            self.assertEqual(['$A$1:$C$2'], list(map(str, chart.ranges)))
 
     def test_create_chart_w_multiple_ranges(self):
         ranges = [pyoo.SheetAddress(0, 0, 2, 3), pyoo.SheetAddress(10, 10, 2, 3)]
         with self.create_chart(ranges=ranges) as chart:
-            self.assertEqual(['$A$1:$C$2', '$K$11:$M$12'], map(str, chart.ranges))
+            self.assertEqual(['$A$1:$C$2', '$K$11:$M$12'], list(map(str, chart.ranges)))
 
     def test_create_chart_w_row_header(self):
         with self.create_chart(row_header=True) as chart:
@@ -729,7 +734,7 @@ class ChartsTestCase(BaseDocumentTestCase):
     def test_create_chart_w_cells_as_address(self):
         address = self.sheet[:2,:3]
         with self.create_chart(ranges=address) as chart:
-            self.assertEqual(['$A$1:$C$2'], map(str, chart.ranges))
+            self.assertEqual(['$A$1:$C$2'], list(map(str, chart.ranges)))
 
     def test_default_diagram_type(self):
         with self.create_chart() as chart:
@@ -994,15 +999,16 @@ class SpreadsheetCollectionTestCase(BaseDocumentTestCase):
         with self.assertRaises(KeyError):
             del self.document.sheets['Missing']
 
-    def test_sheet_unicode(self):
+    def test_sheet_text(self):
         sheet = self.document.sheets[0]
         sheet.name = 'My Sheet'
-        self.assertEqual(u'My Sheet', unicode(sheet))
+        self.assertEqual(u'My Sheet', pyoo.text_type(sheet))
 
-    def test_sheet_str(self):
-        sheet = self.document.sheets[0]
-        sheet.name = 'My Sheet'
-        self.assertEqual('My Sheet', str(sheet))
+    if pyoo.PY2:
+        def test_sheet_str(self):
+            sheet = self.document.sheets[0]
+            sheet.name = 'My Sheet'
+            self.assertEqual('My Sheet', str(sheet))
 
     def test_sheet_repr(self):
         sheet = self.document.sheets[0]

@@ -49,6 +49,19 @@ If some important feature missing then the UNO API is always available.
 .. _Python-UNO: http://www.openoffice.org/udk/python/python-bridge.html
 
 
+Requirements
+------------
+
+PyOO runs on both Python 2 (2.7+) and Python 3 (3.3+).
+
+The only dependency is the Python-UNO library (imported as a module ``uno``).
+It is often installed with the office suite. On Debian based systems it can by
+installed as ``python-uno`` or ``python3-uno`` package.
+
+Obviously you will also need OpenOffice or LibreOffice Calc.
+On Debian systems it is available as ``libreoffice-calc`` package.
+
+
 Installation
 ------------
 
@@ -56,12 +69,7 @@ PyOO library can be installed using standard setup.py script: ::
 
     $ python setup.py install
 
-The only dependency is the Python-UNO library (imported as a module ``uno``).
-It is often installed with the office suite. On Debian it can by installed
-as ``python-uno`` package.
-
-Obviously you will also need OpenOffice or LibreOffice Calc.
-On Debian it is available as ``libreoffice-calc`` package.
+Alternatively you can copy the ``pyoo.py`` file somewhere to your ``PYTHONPATH``.
 
 
 Usage
