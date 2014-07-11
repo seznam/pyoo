@@ -1,36 +1,50 @@
 
-=====================================================
-PyOO - Pythonic interface to OpenOffice.org API (UNO)
-=====================================================
+========================================================
+PyOO - Pythonic interface to Apache OpenOffice API (UNO)
+========================================================
 
-PyOO allows to control a running OpenOffice.org_ program and
-use it for reading and writing spreadsheet documents.
-The library can be used for creation of miscellaneous exports
-to spreadsheet many document formats -- including Microsoft
-Excel 97 (.xls) and Microsoft Excel 2007 (.xlsx).
+PyOO allows you to control a running OpenOffice_ or LibreOffice_
+program for reading and writing spreadsheet documents.
+The library can be used for generating documents in various
+formats -- including Microsoft Excel 97 (.xls),
+Microsoft Excel 2007 (.xlsx) and PDF.
 
-The main advantage of PyOO library is that it can use almost any
-functionality implemented in OpenOffice.org so it does not need
-to reinvent the wheel as many libraries do. On the other
-side it requires a running instance of an OpenOffice.org program
-which means significant overhead.
+The main advantage of the PyOO library is that it can use almost any
+functionality implemented in OpenOffice / LibreOffice applications.
+On the other hand it needs a running process of a office suite
+application which is significant overhead.
 
-PyOO uses an UNO_ interface via Python-UNO_ bridge. UNO is a
-standard interface which allows to control running OpenOffice program.
-Python-UNO makes this interface available in Python scripts.
-
+PyOO uses UNO_ interface via Python-UNO_ bridge. UNO is a
+standard interface to a running OpenOffice or LibreOffice
+application. Python-UNO provides this interface in Python scripts.
 Direct usage of UNO API via Python-UNO can be quite complicated
-and even simple tasks require a lot of code. Another problem
-is that many UNO calls are slow and should be avoided when it
-is possible.
+and even simple tasks require a lot of code. Also many UNO calls
+are slow and should be avoided when possible.
 
-PyOO wraps robust Python-UNO bridge to simple and Pythonic
+PyOO wraps a robust Python-UNO bridge to simple and Pythonic
 interface. Under the hood it implements miscellaneous
 optimizations which can prevent unnecessary expensive UNO
 calls.
 
+Available features:
 
-.. _OpenOffice.org: http://www.openoffice.org/
+  * Opening and creation of spreadsheet documents
+  * Saving documents to all formats available in OpenOffice
+  * Charts and diagrams
+  * Sheet access and manipulation
+  * Formulas
+  * Cell merging
+  * Number, text, date, and time values
+  * Cell and text formating
+  * Number formating
+  * Locales
+
+If some important feature missing then the UNO API is always available.
+
+
+.. _OpenOffice: http://www.openoffice.org/
+.. _LibreOffice: http://www.libreoffice.org/
+.. http://www.libreoffice.org/
 .. _UNO: http://www.openoffice.org/api/docs/common/ref/com/sun/star/module-ix.html
 .. _Python-UNO: http://www.openoffice.org/udk/python/python-bridge.html
 
@@ -42,34 +56,43 @@ PyOO library can be installed using standard setup.py script: ::
 
     $ python setup.py install
 
-The only dependecy is the Python-UNO library (imported as a ``uno`` module).
-If OpenOffice.org is installed in the system then Python-UNO should be
-already present It can be installed as a ``python-uno`` Debian package.
+The only dependency is the Python-UNO library (imported as a module ``uno``).
+It is often installed with the office suite. On Debian it can by installed
+as ``python-uno`` package.
 
-
-Starting OpenOffice.org
------------------------
-
-
-PyOO requires a running OpenOffice.org instance which it can
-connect to. On Debian you can start the program from a command
-line by command similar to: ::
-
-    $ openoffice.org -accept="socket,host=localhost,port=2002;urp;StarOffice.ServiceManager" -norestore -nofirstwizard -nologo -invisible # -headless
-
-If you plan to connect remotely replace ``localhost`` by your IP address
-or ``0.0.0.0``. Because of the other options no user interface should be
-displayed until first document is opened. If the `-headless` option is
-used then no user interface is visible even when a document is opened.
-
-On Ubuntu use following command: ::
-
-    $ soffice --accept="socket,host=localhost,port=2002;urp;" --norestore --nologo --nodefault # --headless
-
+Obviously you will also need OpenOffice or LibreOffice Calc.
+On Debian it is available as ``libreoffice-calc`` package.
 
 
 Usage
 -----
+
+Starting OpenOffice / LibreOffice
+.................................
+
+PyOO requires a running OpenOffice or LibreOffice instance which
+it can connect to. On Debian you can start LibreOffice from
+a command line using a command similar to: ::
+
+    $ soffice --accept="socket,host=localhost,port=2002;urp;" --norestore --nologo --nodefault # --headless
+
+The LibreOffice will be listening for localhost connection
+on port 2002. Alternatively a named pipe can be used: ::
+
+    $ soffice --accept="pipe,name=hello;urp;" --norestore --nologo --nodefault # --headless
+
+If the `--headless` option is used then no user interface is
+visible even when a document is opened.
+
+For more information run: ::
+
+    $ soffice --help
+
+It is recommended to start directly the ``soffice`` binary.
+There can be various scripts (called for example ``libreoffice``)
+which will run the ``soffice`` binary but you may not get the
+correct PID of the running program.
+
 
 Accessing documents
 ...................
@@ -83,20 +106,24 @@ to the running program has to be created first: ::
 Host name and port number used in the example ``('localhost', 2002)``
 are default values so they can be omitted.
 
+Connection to a named pipe is also possible: ::
+
+    >>> pyoo.Desktop(pipe='hello')
+
 New spreadsheet document can be created using ``Desktop.create_spreadsheet()``
 method or opened using ``Desktop.open_spreadsheet()``: ::
 
     >>> doc = desktop.create_spreadsheet()
     >>> # doc = desktop.open_spreadsheet("/path/to/spreadsheet.ods")
 
-If OpenOffice.org program is not running in a headless mode then
-a new window with Calc program should be opened.
+If the office application is not running in the headless
+mode then a new window with Calc program should open now.
 
 
 Sheets
 ......
 
-Spreasheet document is represented by a ``SpreadsheetDocument`` class which
+Spreadsheet document is represented by a ``SpreadsheetDocument`` class which
 implements basic manipulation with document. All data are in  sheets
 which can can be accessed and manipulated via ``SpreadsheetDocument.sheets``
 property: ::
@@ -194,11 +221,11 @@ Charts can be created: ::
 
     >>> chart = sheet.charts.create('My Chart', sheet[5:10, 0:5], sheet[:4,:3])
 
-The first argument is a chart name, the second argument specifies chart
-position a the third one contains address of source data (it can be also
-a list or tuple). If optional ``row_header`` or ``col_header`` keyword
-arguments are set to ``True`` then labels will be read from first row
-or column.
+The first argument is a chart name, the second argument specifies
+chart position and the third one contains address of source data
+(it can be also a list or tuple). If optional ``row_header`` or
+``col_header`` keyword arguments are set to ``True`` then labels
+will be read from first row or column.
 
 Existing charts can be accessed either by an index or a name: ::
 
@@ -240,7 +267,6 @@ miscellanous properties. ::
     >>> diagram.series[0].axis = pyoo.AXIS_SECONDARY
 
 
-
 Saving documents
 ................
 
@@ -248,10 +274,9 @@ Spreadsheet documents can be saved using save method: ::
 
     >>> doc.save('example.xlsx', pyoo.FILTER_EXCEL_2007)
 
-And finally never forget to close the document: ::
+And finally do not forget to close the document: ::
 
     >>> doc.close()
-
 
 
 Testing
@@ -259,15 +284,9 @@ Testing
 
 Automated integration tests cover most of the code.
 
-Many new features were added to ``unittest`` module in Python 2.7 and
-tests for PyOO library use some of them. If you are using older version
-of Python please install ``unittest2`` library which back-ports these
-features (for example install Debian package `python-unittest2`).
-
-The test suite assumes that OpenOffice.org program is running and
+The test suite assumes that OpenOffice or LibreOffice is running and
 it is listening on localhost port 2002.
 
 All tests are in the ``test.py`` file: ::
 
     $ python test.py
-
