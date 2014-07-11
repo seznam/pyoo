@@ -1,8 +1,8 @@
-szn-python-pyoo (0.4) unstable; urgency=low
+szn-python-pyoo (1.0) UNRELEASED; urgency=low
 
-  * Not yet released! 
+  * Public release.
 
- -- Miloslav Pojman <miloslav.pojman@firma.seznam.cz>  Tue, 29 Oct 2013 15:12:33 +0100
+ -- Miloslav Pojman <miloslav.pojman@firma.seznam.cz>  Fri, 11 Jul 2014 15:42:41 +0200
 
 szn-python-pyoo (0.3) unstable; urgency=low
 
