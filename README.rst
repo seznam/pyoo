@@ -65,7 +65,7 @@ On Debian systems it is available as ``libreoffice-calc`` package.
 Installation
 ------------
 
-PyOO library can be installed using standard setup.py script: ::
+PyOO library can be installed using standard ``setup.py`` script: ::
 
     $ python setup.py install
 

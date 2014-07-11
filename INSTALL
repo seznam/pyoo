@@ -1,0 +1,9 @@
+Thanks for downloading PyOO.
+
+The library can be installed using the setup.py script:
+
+    python setup.py install
+
+Alternatively you can copy the pyoo.py file somewhere to your PYTHONPATH.
+
+See the README.rst file for requirements and usage.
