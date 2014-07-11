@@ -1,7 +1,8 @@
 *.pyc
 *.pyo
 .coverage
-MANIFEST
 *.egg-info
+README.html
+MANIFEST
 /build/
 /dist/
