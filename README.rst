@@ -44,7 +44,6 @@ If some important feature missing then the UNO API is always available.
 
 .. _OpenOffice: http://www.openoffice.org/
 .. _LibreOffice: http://www.libreoffice.org/
-.. http://www.libreoffice.org/
 .. _UNO: http://www.openoffice.org/api/docs/common/ref/com/sun/star/module-ix.html
 .. _Python-UNO: http://www.openoffice.org/udk/python/python-bridge.html
 
@@ -65,11 +64,17 @@ On Debian systems it is available as ``libreoffice-calc`` package.
 Installation
 ------------
 
-PyOO library can be installed using standard ``setup.py`` script: ::
+PyOO library can be installed from PYPI using pip_ (or easy_install)::
+
+    $ pip install pyoo
+
+If you downloaded the code you can install it using the  ``setup.py`` script: ::
 
     $ python setup.py install
 
 Alternatively you can copy the ``pyoo.py`` file somewhere to your ``PYTHONPATH``.
+
+.. _pip: https://pypi.python.org/pypi/pip
 
 
 Usage
@@ -89,7 +94,7 @@ on port 2002. Alternatively a named pipe can be used: ::
 
     $ soffice --accept="pipe,name=hello;urp;" --norestore --nologo --nodefault # --headless
 
-If the `--headless` option is used then no user interface is
+If the ``--headless`` option is used then no user interface is
 visible even when a document is opened.
 
 For more information run: ::
