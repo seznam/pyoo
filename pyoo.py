@@ -1868,3 +1868,35 @@ class LazyDesktop(object):
         """
         desktop = self.cls(self.hostname, self.port)
         return desktop.open_spreadsheet(path, as_template=as_template)
+
+
+class NameGenerator(object):
+    """
+    Generates valid names for Open Office.
+
+    Keeps track of used names and does not return one value twice.
+
+    Names must not contain characters []*?:\/.
+    Names (in older versions of OO) must have length of 31 chars maximum.
+    Names must be unique (case insensitive).
+    """
+
+    max_length = 31
+
+    def __init__(self):
+        self._invalid = set([''])
+
+    def __call__(self, name):
+        name = text_type(name)
+        for char in '[]*?:\/':
+            name = name.replace(char, '')
+        for i in itertools.count(1):
+            if name:
+                suffix = ' %d' % i if i > 1 else ''
+                candidate = name[:self.max_length - len(suffix)] + suffix
+            else:
+                candidate = '%d' % i
+            if candidate.lower() not in self._invalid:
+                break
+        self._invalid.add(candidate.lower())
+        return candidate

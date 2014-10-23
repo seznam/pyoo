@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 """
 PyOO - Pythonic interface to Apache OpenOffice API (UNO)
 
@@ -1018,6 +1019,68 @@ class SpreadsheetCollectionTestCase(BaseDocumentTestCase):
     def test_sheet_index(self):
         self.assertEqual(0, self.document.sheets[0].index)
 
+
+class NameGeneratorTestCase(unittest.TestCase):
+
+    def test_empty_name(self):
+        get_name = pyoo.NameGenerator()
+        self.assertEqual(get_name(''), '1')
+
+    def test_multiple_empty_names(self):
+        get_name = pyoo.NameGenerator()
+        get_name('')
+        self.assertEqual(get_name(''), '2')
+
+    def test_valid_name(self):
+        get_name = pyoo.NameGenerator()
+        self.assertEqual(get_name('hello'), 'hello')
+
+    def test_suffix_is_added_for_non_unique_names(self):
+        get_name = pyoo.NameGenerator()
+        get_name('hello')
+        self.assertEqual(get_name('hello'), 'hello 2')
+
+    def test_names_are_unique_after_suffix_is_added(self):
+        get_name = pyoo.NameGenerator()
+        get_name('hello')
+        get_name('hello 2')
+        self.assertEqual(get_name('hello'), 'hello 3')
+
+    def test_invalid_chars_are_replaced(self):
+        get_name = pyoo.NameGenerator()
+        self.assertEqual(get_name('hello[]*?:\/'), 'hello')
+
+    def test_name_with_invalid_chars_only(self):
+        get_name = pyoo.NameGenerator()
+        self.assertEqual(get_name('[]*?:\/'), '1')
+
+    def test_multiple_names_with_invalid_chars_only(self):
+        get_name = pyoo.NameGenerator()
+        get_name('[]*?:\/')
+        self.assertEqual(get_name('[]*?:\/'), '2')
+
+    def test_names_are_trimmed_to_31_chars(self):
+        get_name = pyoo.NameGenerator()
+        long_name = '1234567890123456789012345678901234567890'
+        self.assertEqual(get_name(long_name), '1234567890123456789012345678901')
+
+    def test_names_are_unique_after_trimmed_to_31(self):
+        get_name = pyoo.NameGenerator()
+        long_name = '1234567890123456789012345678901234567890'
+        get_name(long_name)
+        self.assertEqual(get_name(long_name), '12345678901234567890123456789 2')
+
+    def test_names_are_trimmed_to_31_even_if_counter_has_two_digits(self):
+        get_name = pyoo.NameGenerator()
+        long_name = '1234567890123456789012345678901234567890'
+        for i in range(9):
+            get_name(long_name)
+        self.assertEqual(get_name(long_name), '1234567890123456789012345678 10')
+
+    def test_names_with_casesensitive_chars_are_unique(self):
+        get_name = pyoo.NameGenerator()
+        get_name(u'Test Č')
+        self.assertEqual(u'test č 2', get_name(u'test č'))
 
 if __name__ == '__main__':
     unittest.main()
