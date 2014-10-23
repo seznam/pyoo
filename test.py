@@ -1073,7 +1073,7 @@ class NameGeneratorTestCase(unittest.TestCase):
     def test_names_are_trimmed_to_31_even_if_counter_has_two_digits(self):
         get_name = pyoo.NameGenerator()
         long_name = '1234567890123456789012345678901234567890'
-        for i in xrange(9):
+        for i in range(9):
             get_name(long_name)
         self.assertEqual(get_name(long_name), '1234567890123456789012345678 10')
 
