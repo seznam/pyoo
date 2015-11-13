@@ -1785,6 +1785,11 @@ def _get_connection_url(hostname, port, pipe=None):
         conn = 'socket,host=%s,port=%d' % (hostname, port)
     return 'uno:%s;urp;StarOffice.ComponentContext' % conn
 
+def _get_remote_context(resolver, url):
+    try:
+        return resolver.resolve(url)
+    except _NoConnectException:
+        raise IOError(resolver, url)
 
 class Desktop(_UnoProxy):
     """
@@ -1802,7 +1807,7 @@ class Desktop(_UnoProxy):
         url = _get_connection_url(hostname, port, pipe)
         local_context = uno.getComponentContext()
         resolver = local_context.getServiceManager().createInstanceWithContext('com.sun.star.bridge.UnoUrlResolver', local_context)
-        remote_context = resolver.resolve(url)
+        remote_context = _get_remote_context(resolver, url)
         desktop = remote_context.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", remote_context)
         super(Desktop, self).__init__(desktop)
 
