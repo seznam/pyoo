@@ -293,6 +293,7 @@ Saving documents
 Spreadsheet documents can be saved using save method: ::
 
     >>> doc.save('example.xlsx', pyoo.FILTER_EXCEL_2007)
+    >>> # doc.save()
 
 And finally do not forget to close the document: ::
 
