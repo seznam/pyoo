@@ -1662,15 +1662,25 @@ class SpreadsheetDocument(_UnoProxy):
     Spreadsheet document.
     """
 
-    def save(self, path, filter_name=None):
+    def save(self, path=None, filter_name=None):
         """
         Saves this document to a local file system.
+
+        The optional first argument defaults to the document's path.
 
         Accept optional second  argument which defines type of
         the saved file. Use one of FILTER_* constants or see list of
         available filters at http://wakka.net/archives/7 or
         http://www.oooforum.org/forum/viewtopic.phtml?t=71294.
         """
+
+        if path is None:
+            try:
+                self._target.store()
+            except _IOException as e:
+                raise IOError(e.Message)
+            return
+
         # UNO requires absolute paths
         url = uno.systemPathToFileUrl(os.path.abspath(path))
         if filter_name:
