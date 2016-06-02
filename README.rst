@@ -159,6 +159,13 @@ property: ::
     >>> del doc.sheets[1]
     >>> del doc.sheets['Copied sheet']
 
+    >>> # Create multiple sheets with same name/prefix
+    >>> get_sheet_name = pyoo.NameGenerator()
+    >>> doc.sheets.create(get_sheet_name('My sheet'))
+    <Sheet: 'My sheet'>
+    >>> doc.sheets.create(get_sheet_name('My sheet'))
+    <Sheet: 'My sheet 2'>
+
 Cells can be accessed using index notation from a sheet: ::
 
     >>> # Get sheet:
@@ -286,6 +293,7 @@ Saving documents
 Spreadsheet documents can be saved using save method: ::
 
     >>> doc.save('example.xlsx', pyoo.FILTER_EXCEL_2007)
+    >>> # doc.save()
 
 And finally do not forget to close the document: ::
 
@@ -309,4 +317,4 @@ License
 -------
 
 This library is released under the MIT license. Seet the ``LICENSE`` file.
-Copyright (c) 2014 Seznam.cz, a.s.
+Copyright (c) 2016 Seznam.cz, a.s.

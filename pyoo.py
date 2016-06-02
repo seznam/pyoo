@@ -1,7 +1,7 @@
 """
 PyOO - Pythonic interface to Apache OpenOffice API (UNO)
 
-Copyright (c) 2014 Seznam.cz, a.s.
+Copyright (c) 2016 Seznam.cz, a.s.
 
 """
 
@@ -1662,15 +1662,25 @@ class SpreadsheetDocument(_UnoProxy):
     Spreadsheet document.
     """
 
-    def save(self, path, filter_name=None):
+    def save(self, path=None, filter_name=None):
         """
         Saves this document to a local file system.
+
+        The optional first argument defaults to the document's path.
 
         Accept optional second  argument which defines type of
         the saved file. Use one of FILTER_* constants or see list of
         available filters at http://wakka.net/archives/7 or
         http://www.oooforum.org/forum/viewtopic.phtml?t=71294.
         """
+
+        if path is None:
+            try:
+                self._target.store()
+            except _IOException as e:
+                raise IOError(e.Message)
+            return
+
         # UNO requires absolute paths
         url = uno.systemPathToFileUrl(os.path.abspath(path))
         if filter_name:
@@ -1785,6 +1795,11 @@ def _get_connection_url(hostname, port, pipe=None):
         conn = 'socket,host=%s,port=%d' % (hostname, port)
     return 'uno:%s;urp;StarOffice.ComponentContext' % conn
 
+def _get_remote_context(resolver, url):
+    try:
+        return resolver.resolve(url)
+    except _NoConnectException:
+        raise IOError(resolver, url)
 
 class Desktop(_UnoProxy):
     """
@@ -1802,7 +1817,7 @@ class Desktop(_UnoProxy):
         url = _get_connection_url(hostname, port, pipe)
         local_context = uno.getComponentContext()
         resolver = local_context.getServiceManager().createInstanceWithContext('com.sun.star.bridge.UnoUrlResolver', local_context)
-        remote_context = resolver.resolve(url)
+        remote_context = _get_remote_context(resolver, url)
         desktop = remote_context.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", remote_context)
         super(Desktop, self).__init__(desktop)
 
@@ -1868,3 +1883,35 @@ class LazyDesktop(object):
         """
         desktop = self.cls(self.hostname, self.port)
         return desktop.open_spreadsheet(path, as_template=as_template)
+
+
+class NameGenerator(object):
+    """
+    Generates valid names for Open Office.
+
+    Keeps track of used names and does not return one value twice.
+
+    Names must not contain characters []*?:\/.
+    Names (in older versions of OO) must have length of 31 chars maximum.
+    Names must be unique (case insensitive).
+    """
+
+    max_length = 31
+
+    def __init__(self):
+        self._invalid = set([''])
+
+    def __call__(self, name):
+        name = text_type(name)
+        for char in '[]*?:\/':
+            name = name.replace(char, '')
+        for i in itertools.count(1):
+            if name:
+                suffix = ' %d' % i if i > 1 else ''
+                candidate = name[:self.max_length - len(suffix)] + suffix
+            else:
+                candidate = '%d' % i
+            if candidate.lower() not in self._invalid:
+                break
+        self._invalid.add(candidate.lower())
+        return candidate

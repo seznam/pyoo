@@ -1,7 +1,7 @@
 """
 PyOO - Pythonic interface to Apache OpenOffice API (UNO)
 
-Copyright (c) 2014 Seznam.cz, a.s.
+Copyright (c) 2016 Seznam.cz, a.s.
 
 """
 
@@ -10,7 +10,7 @@ from distutils.core import setup
 
 setup(
     name='pyoo',
-    version='1.0',
+    version='1.1',
     description='Pythonic interface to Apache OpenOffice API (UNO)',
     long_description = open('README.rst').read(),
     author='Miloslav Pojman',
