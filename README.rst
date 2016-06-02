@@ -317,4 +317,4 @@ License
 -------
 
 This library is released under the MIT license. Seet the ``LICENSE`` file.
-Copyright (c) 2014 Seznam.cz, a.s.
+Copyright (c) 2016 Seznam.cz, a.s.
