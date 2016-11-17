@@ -1815,10 +1815,10 @@ class Desktop(_UnoProxy):
 
     def __init__(self, hostname='localhost', port=2002, pipe=None):
         url = _get_connection_url(hostname, port, pipe)
-        local_context = uno.getComponentContext()
-        resolver = local_context.getServiceManager().createInstanceWithContext('com.sun.star.bridge.UnoUrlResolver', local_context)
-        remote_context = _get_remote_context(resolver, url)
-        desktop = remote_context.getServiceManager().createInstanceWithContext("com.sun.star.frame.Desktop", remote_context)
+        self.local_context = uno.getComponentContext()
+        resolver = self.local_context.getServiceManager().createInstanceWithContext('com.sun.star.bridge.UnoUrlResolver', self.local_context)
+        self.remote_context = _get_remote_context(resolver, url)
+        desktop = self.remote_context.getServiceManager().createInstanceWithContext('com.sun.star.frame.Desktop', self.remote_context)
         super(Desktop, self).__init__(desktop)
 
     def create_spreadsheet(self):
