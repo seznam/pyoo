@@ -1199,14 +1199,14 @@ class CellRange(object):
         return cursor.get_target(address.row, address.col,
                                  address.row_count, address.col_count)
 
-    def _clean_value(self, value):
-        """
-        Validates and converts value before assigning it to a cell.
-        """
-        if value is None:
-            return value
+    def _convert(self, value):
         if isinstance(value, numbers.Real):
-            return value
+            # OpenOffices raises RuntimeError for integers outside of
+            # 32-bit integers
+            if -2147483648 <= value <= 2147483647:
+                return value
+            else:
+                return float(value)
         if isinstance(value, string_types):
             return value
         if isinstance(value, datetime.date):
@@ -1215,21 +1215,21 @@ class CellRange(object):
             return self.sheet.document.time_to_number(value)
         return text_type(value)
 
+    def _clean_value(self, value):
+        """
+        Validates and converts value before assigning it to a cell.
+        """
+        if value is None:
+            return value
+        return self._convert(value)
+
     def _clean_formula(self, value):
         """
         Validates and converts formula before assigning it to a cell.
         """
         if value is None:
             return ''
-        if isinstance(value, numbers.Real):
-            return value
-        if isinstance(value, string_types):
-            return value
-        if isinstance(value, datetime.date):
-            return self.sheet.document.date_to_number(value)
-        if isinstance(value, datetime.time):
-            return self.sheet.document.time_to_number(value)
-        return text_type(value)
+        return self._convert(value)
 
 
 class Cell(CellRange):

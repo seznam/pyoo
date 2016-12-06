@@ -412,11 +412,23 @@ class CellRangeTestCase(BaseDocumentTestCase):
         self.assertEqual(None, cell.date)
         self.assertEqual(None, cell.time)
 
-    def test_number_cell_value(self):
+    def test_int_cell_value(self):
         cell = self.sheet[0, 0]
         cell.value = 1
         self.assertEqual(1, cell.value)
         self.assertEqual('1', cell.formula)
+
+    def test_positive_long_cell_value(self):
+        cell = self.sheet[0, 0]
+        cell.value = 2147483648
+        self.assertEqual(2147483648, cell.value)
+        self.assertEqual('2147483648', cell.formula)
+
+    def test_negative_long_cell_value(self):
+        cell = self.sheet[0, 0]
+        cell.value = -2147483649
+        self.assertEqual(-2147483649, cell.value)
+        self.assertEqual('-2147483649', cell.formula)
 
     def test_text_cell_value(self):
         cell = self.sheet[0, 0]
@@ -455,11 +467,23 @@ class CellRangeTestCase(BaseDocumentTestCase):
         self.assertEqual('', cell.value)
         self.assertEqual('', cell.formula)
 
-    def test_number_cell_formula(self):
+    def test_int_cell_formula(self):
         cell = self.sheet[0, 0]
         cell.formula = 1
         self.assertEqual(1, cell.value)
         self.assertEqual('1', cell.formula)
+
+    def test_positive_long_cell_formula(self):
+        cell = self.sheet[0, 0]
+        cell.formula = 2147483648
+        self.assertEqual(2147483648, cell.value)
+        self.assertEqual('2147483648', cell.formula)
+
+    def test_negative_long_cell_formula(self):
+        cell = self.sheet[0, 0]
+        cell.formula = -2147483649
+        self.assertEqual(-2147483649, cell.value)
+        self.assertEqual('-2147483649', cell.formula)
 
     def test_text_cell_formula(self):
         cell = self.sheet[0, 0]
