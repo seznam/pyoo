@@ -10,7 +10,7 @@ from distutils.core import setup
 
 setup(
     name='pyoo',
-    version='1.2.dev',
+    version='1.2',
     description='Pythonic interface to Apache OpenOffice API (UNO)',
     long_description = open('README.rst').read(),
     author='Miloslav Pojman',
